@@ -1,59 +1,47 @@
 import { prisma } from "../lib/prisma";
+import bcrypt from "bcryptjs";
 
 async function main() {
-  console.log("Seeding UNIGAP database...");
+  const passwordHash = await bcrypt.hash("Unigap@123", 10);
+  console.log("Seeding UNIGAP database with bcrypt passwords...");
 
   const superAdmin = await prisma.user.upsert({
-    where: {
-      email: "superadmin@unigap.edu",
-    },
-    update: {
-      role: "SUPER_ADMIN",
-    },
+    where: { email: "superadmin@unigap.edu" },
+    update: { role: "SUPER_ADMIN", passwordHash },
     create: {
       email: "superadmin@unigap.edu",
       name: "UNIGAP Super Admin",
-      passwordHash: "TEMP_PASSWORD",
+      passwordHash,
       role: "SUPER_ADMIN",
       department: "Executive Leadership",
     },
   });
 
   const admin = await prisma.user.upsert({
-    where: {
-      email: "admin@unigap.edu",
-    },
-    update: {
-      role: "ADMIN",
-    },
+    where: { email: "admin@unigap.edu" },
+    update: { role: "ADMIN", passwordHash },
     create: {
       email: "admin@unigap.edu",
       name: "UNIGAP Course Admin",
-      passwordHash: "TEMP_PASSWORD",
+      passwordHash,
       role: "ADMIN",
       department: "Course Management",
     },
   });
 
   const student = await prisma.user.upsert({
-    where: {
-      email: "student@unigap.edu",
-    },
-    update: {
-      role: "STUDENT",
-    },
+    where: { email: "student@unigap.edu" },
+    update: { role: "STUDENT", passwordHash },
     create: {
       email: "student@unigap.edu",
       name: "Test Student",
-      passwordHash: "TEMP_PASSWORD",
+      passwordHash,
       role: "STUDENT",
     },
   });
 
   const instructor = await prisma.instructor.upsert({
-    where: {
-      id: "inst-seed-1",
-    },
+    where: { id: "inst-seed-1" },
     update: {},
     create: {
       id: "inst-seed-1",
@@ -68,17 +56,14 @@ async function main() {
   });
 
   const course = await prisma.course.upsert({
-    where: {
-      slug: "javascript-mastery",
-    },
+    where: { slug: "javascript-mastery" },
     update: {},
     create: {
       title: "JavaScript & TypeScript Mastery 2026",
       slug: "javascript-mastery",
       description:
         "Master modern ES2026, TypeScript, async patterns, and clean code architecture.",
-      shortDesc:
-        "Complete guide to modern JS & TS development.",
+      shortDesc: "Complete guide to modern JS & TS development.",
       category: "Development",
       level: "Beginner",
       price: 0,
@@ -92,9 +77,7 @@ async function main() {
   });
 
   const achievement = await prisma.achievement.upsert({
-    where: {
-      id: "achieve-first-step",
-    },
+    where: { id: "achieve-first-step" },
     update: {},
     create: {
       id: "achieve-first-step",
@@ -119,7 +102,7 @@ async function main() {
 
 main()
   .catch((error) => {
-    console.error("Seed error:", error);
+    console.error("❌ Seed error:", error);
     process.exit(1);
   })
   .finally(async () => {
