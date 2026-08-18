@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  /* Light mode -- purple / magenta brand palette */
+  --bg: 300 20% 99%;
+  --surface: 0 0% 100%;
+  --surface-2: 303 35% 97%;
+  --border: 303 20% 90%;
+  --ink: 301 60% 12%;
+  --ink-muted: 301 15% 45%;
+
+  --primary: 301 100% 29%;        /* #920090 */
+  --primary-fg: 0 0% 100%;        /* #FFFFFF */
+  --primary-50: 303 85% 95%;      /* #FDE8FC */
+
+  --accent: 301 100% 42%;         /* #D400D1 */
+  --accent-fg: 0 0% 100%;
+
+  --success: 152 60% 40%;
+  --warning: 38 92% 50%;
+  --error: 0 72% 51%;
+
+  --streak: 22 90% 55%;          /* warm orange for streak/fire */
+  --xp: 301 100% 42%;            /* brand magenta for xp */
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
+}
+
+.dark {
+  /* Dark mode -- tailored with deep plum #520051 and vibrant magenta */
+  --bg: 301 50% 7%;
+  --surface: 301 40% 10%;
+  --surface-2: 301 35% 14%;
+  --border: 301 30% 20%;
+  --ink: 300 20% 96%;
+  --ink-muted: 300 15% 65%;
+
+  --primary: 301 100% 42%;       /* #D400D1 */
+  --primary-fg: 0 0% 100%;
+  --primary-50: 301 60% 18%;
+
+  --accent: 301 100% 48%;
+  --accent-fg: 0 0% 100%;
+
+  --success: 152 55% 52%;
+  --warning: 38 90% 58%;
+  --error: 0 78% 65%;
+
+  --streak: 22 90% 62%;
+  --xp: 301 100% 65%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: hsl(var(--bg));
+  color: hsl(var(--ink));
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.container-app {
+  max-width: 1280px;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+}
+
+@media (min-width: 1024px) {
+  .container-app { padding-inline: 2rem; }
+}
+
+.path-bg {
+  background-image:
+    radial-gradient(circle at 15% 20%, hsl(var(--primary) / 0.14), transparent 40%),
+    radial-gradient(circle at 85% 15%, hsl(var(--accent) / 0.14), transparent 40%),
+    radial-gradient(circle at 50% 100%, hsl(var(--xp) / 0.10), transparent 45%);
+}

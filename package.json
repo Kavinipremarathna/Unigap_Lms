@@ -1,0 +1,44 @@
+{
+  "name": "unigap-lms",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.9.1",
+    "@prisma/client": "^7.9.1",
+    "bcryptjs": "^3.0.3",
+    "class-variance-authority": "0.7.0",
+    "clsx": "2.1.1",
+    "dotenv": "^17.4.2",
+    "framer-motion": "11.3.19",
+    "jsonwebtoken": "^9.0.3",
+    "lucide-react": "0.417.0",
+    "next": "14.2.5",
+    "pg": "^8.23.0",
+    "prisma": "^7.9.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "tailwind-merge": "2.4.0"
+  },
+  "devDependencies": {
+    "@prisma/cli": "^3.0.0-beta.30",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "20.14.12",
+    "@types/pg": "^8.23.1",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "autoprefixer": "10.4.19",
+    "eslint": "8.57.0",
+    "eslint-config-next": "14.2.5",
+    "postcss": "8.4.40",
+    "tailwindcss": "3.4.7",
+    "tsx": "^4.23.12",
+    "typescript": "5.5.4"
+  }
+}
