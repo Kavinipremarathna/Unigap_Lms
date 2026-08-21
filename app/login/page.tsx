@@ -3,14 +3,16 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { setAuthenticatedUser } from "@/lib/services/auth.service";
-import { Lock, ArrowRight, ShieldCheck } from "lucide-react";
+import { loginWithNestJS } from "@/lib/services/auth.service";
+import { Lock, ArrowRight, AlertCircle, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [redirectUrl, setRedirectUrl] = useState("/dashboard");
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -22,12 +24,27 @@ export default function LoginPage() {
     }
   }, []);
 
-  const handleLogin = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!email.trim()) return;
+    if (!email.trim() || !password) return;
 
-    setAuthenticatedUser(email);
-    router.push(redirectUrl);
+    setIsLoading(true);
+    setErrorMsg("");
+
+    try {
+      const { user } = await loginWithNestJS(email, password);
+      
+      // If superadmin or admin, redirect to admin panel
+      if (user.role === "SUPER_ADMIN" || user.role === "ADMIN") {
+        router.push("/admin");
+      } else {
+        router.push(redirectUrl);
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to log in. Please check your credentials.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -57,6 +74,14 @@ export default function LoginPage() {
           )}
         </div>
 
+        {/* Error Alert */}
+        {errorMsg && (
+          <div className="mb-6 flex items-center gap-2 rounded-xl bg-red-50 p-3.5 text-xs font-medium text-red-600 border border-red-100">
+            <AlertCircle size={16} className="shrink-0" />
+            <span>{errorMsg}</span>
+          </div>
+        )}
+
         {/* Login Form */}
         <form onSubmit={handleLogin} className="space-y-4">
           {/* Email */}
@@ -76,7 +101,8 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               required
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-xs outline-none transition focus:border-[#920090] focus:ring-4 focus:ring-[#920090]/10"
+              disabled={isLoading}
+              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-xs outline-none transition focus:border-[#920090] focus:ring-4 focus:ring-[#920090]/10 disabled:bg-slate-50"
             />
           </div>
 
@@ -97,16 +123,26 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-xs outline-none transition focus:border-[#920090] focus:ring-4 focus:ring-[#920090]/10"
+              disabled={isLoading}
+              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-xs outline-none transition focus:border-[#920090] focus:ring-4 focus:ring-[#920090]/10 disabled:bg-slate-50"
             />
           </div>
 
-          {/* Login */}
+          {/* Submit Button */}
           <button
             type="submit"
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#520051] px-5 py-3.5 text-xs font-bold text-white transition hover:bg-[#920090] shadow-xs"
+            disabled={isLoading}
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#520051] px-5 py-3.5 text-xs font-bold text-white transition hover:bg-[#920090] shadow-xs disabled:opacity-70"
           >
-            Log In & Continue <ArrowRight size={16} />
+            {isLoading ? (
+              <>
+                <Loader2 size={16} className="animate-spin" /> Authenticating...
+              </>
+            ) : (
+              <>
+                Log In & Continue <ArrowRight size={16} />
+              </>
+            )}
           </button>
         </form>
 

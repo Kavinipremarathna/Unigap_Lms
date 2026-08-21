@@ -1,22 +1,46 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { registerWithNestJS } from "@/lib/services/auth.service";
 import {
   ArrowRight,
   Check,
   Sparkles,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
-  const handleRegister = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!fullName.trim() || !email.trim() || !password) return;
 
-    // Temporary prototype behavior.
-    // Real registration will be connected to NestJS + PostgreSQL later.
-    router.push("/login");
+    if (password !== confirmPassword) {
+      setErrorMsg("Passwords do not match. Please check and try again.");
+      return;
+    }
+
+    setIsLoading(true);
+    setErrorMsg("");
+
+    try {
+      await registerWithNestJS(fullName, email, password);
+      router.push("/dashboard");
+    } catch (err: any) {
+      setErrorMsg(err.message || "Registration failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -123,6 +147,14 @@ export default function RegisterPage() {
 
               </div>
 
+              {/* Error Alert */}
+              {errorMsg && (
+                <div className="mb-6 flex items-center gap-2 rounded-xl bg-red-50 p-3.5 text-xs font-medium text-red-600 border border-red-100">
+                  <AlertCircle size={16} className="shrink-0" />
+                  <span>{errorMsg}</span>
+                </div>
+              )}
+
               <form
                 onSubmit={handleRegister}
                 className="space-y-4"
@@ -143,9 +175,12 @@ export default function RegisterPage() {
                     id="fullName"
                     name="fullName"
                     type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
                     placeholder="Your full name"
                     required
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#920090] focus:ring-4 focus:ring-[#920090]/10"
+                    disabled={isLoading}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#920090] focus:ring-4 focus:ring-[#920090]/10 disabled:bg-slate-50"
                   />
 
                 </div>
@@ -165,9 +200,12 @@ export default function RegisterPage() {
                     id="email"
                     name="email"
                     type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
                     required
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#920090] focus:ring-4 focus:ring-[#920090]/10"
+                    disabled={isLoading}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#920090] focus:ring-4 focus:ring-[#920090]/10 disabled:bg-slate-50"
                   />
 
                 </div>
@@ -187,10 +225,13 @@ export default function RegisterPage() {
                     id="password"
                     name="password"
                     type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     placeholder="Create a password"
                     required
                     minLength={6}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#920090] focus:ring-4 focus:ring-[#920090]/10"
+                    disabled={isLoading}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#920090] focus:ring-4 focus:ring-[#920090]/10 disabled:bg-slate-50"
                   />
 
                 </div>
@@ -210,10 +251,13 @@ export default function RegisterPage() {
                     id="confirmPassword"
                     name="confirmPassword"
                     type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Confirm your password"
                     required
                     minLength={6}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#920090] focus:ring-4 focus:ring-[#920090]/10"
+                    disabled={isLoading}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#920090] focus:ring-4 focus:ring-[#920090]/10 disabled:bg-slate-50"
                   />
 
                 </div>
@@ -225,6 +269,7 @@ export default function RegisterPage() {
                   <input
                     type="checkbox"
                     required
+                    disabled={isLoading}
                     className="mt-1 h-4 w-4 rounded border-slate-300 accent-[#920090]"
                   />
 
@@ -246,14 +291,22 @@ export default function RegisterPage() {
 
                 <button
                   type="submit"
-                  className="group flex w-full items-center justify-center gap-2 rounded-xl bg-[#520051] px-5 py-3.5 text-sm font-bold text-white transition hover:bg-[#920090]"
+                  disabled={isLoading}
+                  className="group flex w-full items-center justify-center gap-2 rounded-xl bg-[#520051] px-5 py-3.5 text-sm font-bold text-white transition hover:bg-[#920090] disabled:opacity-70"
                 >
-                  Create account
-
-                  <ArrowRight
-                    size={16}
-                    className="transition-transform group-hover:translate-x-1"
-                  />
+                  {isLoading ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" /> Creating Account...
+                    </>
+                  ) : (
+                    <>
+                      Create account
+                      <ArrowRight
+                        size={16}
+                        className="transition-transform group-hover:translate-x-1"
+                      />
+                    </>
+                  )}
                 </button>
 
               </form>

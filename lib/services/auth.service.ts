@@ -1,10 +1,14 @@
 "use client";
 
 export interface AuthUser {
+  id?: string;
   email: string;
   name: string;
+  role?: string;
   avatar?: string;
 }
+
+const NESTJS_API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
 export function isUserAuthenticated(): boolean {
   if (typeof window === "undefined") return false;
@@ -16,6 +20,76 @@ export function isUserAuthenticated(): boolean {
   } catch {
     return false;
   }
+}
+
+export async function loginWithNestJS(email: string, pass: string): Promise<{ token: string; user: AuthUser }> {
+  const response = await fetch(`${NESTJS_API_URL}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: email.trim(), password: pass }),
+    credentials: "include",
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Login failed. Please check your credentials.");
+  }
+
+  const user: AuthUser = {
+    id: data.user.id,
+    email: data.user.email,
+    name: data.user.name,
+    role: data.user.role,
+  };
+
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.setItem("unigap_auth_logged_in", "true");
+      localStorage.setItem("unigap_auth_token", data.token);
+      localStorage.setItem("unigap_auth_user", JSON.stringify(user));
+      window.dispatchEvent(new Event("unigap_auth_changed"));
+    } catch {
+      // fallback
+    }
+  }
+
+  return { token: data.token, user };
+}
+
+export async function registerWithNestJS(name: string, email: string, pass: string): Promise<{ token: string; user: AuthUser }> {
+  const response = await fetch(`${NESTJS_API_URL}/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: name.trim(), email: email.trim(), password: pass }),
+    credentials: "include",
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Registration failed. Please try again.");
+  }
+
+  const user: AuthUser = {
+    id: data.user.id,
+    email: data.user.email,
+    name: data.user.name,
+    role: data.user.role,
+  };
+
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.setItem("unigap_auth_logged_in", "true");
+      localStorage.setItem("unigap_auth_token", data.token);
+      localStorage.setItem("unigap_auth_user", JSON.stringify(user));
+      window.dispatchEvent(new Event("unigap_auth_changed"));
+    } catch {
+      // fallback
+    }
+  }
+
+  return { token: data.token, user };
 }
 
 export function setAuthenticatedUser(email: string, name?: string): AuthUser {
@@ -39,6 +113,7 @@ export function logoutUser(): void {
   if (typeof window !== "undefined") {
     try {
       localStorage.removeItem("unigap_auth_logged_in");
+      localStorage.removeItem("unigap_auth_token");
       localStorage.removeItem("unigap_auth_user");
       window.dispatchEvent(new Event("unigap_auth_changed"));
     } catch {

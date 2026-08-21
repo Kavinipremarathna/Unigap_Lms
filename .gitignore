@@ -2,9 +2,15 @@ node_modules
 .next
 out
 .env
+backend/.env
 .env*.local
 .DS_Store
 *.tsbuildinfo
+*.js.map
+dist
+backend/dist
 
 /generated/prisma
 .prisma/
+.gemini/
+.claude/
