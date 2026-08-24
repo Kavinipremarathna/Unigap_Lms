@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { registerWithNestJS } from "@/lib/services/auth.service";
+import { Logo } from "@/components/layout/logo";
 import {
   ArrowRight,
   Check,
@@ -44,50 +45,44 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#faf7fb] px-5 py-10">
+    <main className="min-h-screen bg-bg text-ink px-5 py-10 transition-colors">
       <div className="mx-auto flex min-h-[90vh] max-w-6xl items-center justify-center">
 
-        <div className="grid w-full overflow-hidden rounded-[32px] border border-[#920090]/10 bg-white shadow-[0_30px_80px_-30px_rgba(82,0,81,0.25)] md:grid-cols-2">
+        <div className="grid w-full overflow-hidden rounded-[4px] border border-border bg-surface shadow-2xl md:grid-cols-2">
 
           {/* LEFT SIDE */}
-          <div className="relative hidden overflow-hidden bg-[#520051] p-12 text-white md:flex md:flex-col md:justify-between">
+          <div className="relative hidden overflow-hidden bg-surface-2 p-12 text-ink border-r border-border md:flex md:flex-col md:justify-between">
 
-            <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#D400D1]/30 blur-[80px]" />
-
-            <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-[#920090]/40 blur-[80px]" />
+            <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-primary/5 blur-[80px]" />
 
             <div className="relative">
 
-              <Link
-                href="/"
-                className="flex items-center gap-2 text-xl font-bold"
-              >
-                <span className="h-2.5 w-2.5 rounded-full bg-[#D400D1]" />
-                UNIGAP
+              <Link href="/" aria-label="UNIGAP home">
+                <Logo />
               </Link>
 
-              <div className="mt-20">
+              <div className="mt-16">
 
-                <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5">
+                <div className="mb-5 inline-flex items-center gap-2 rounded-[4px] border border-primary/30 bg-primary/10 px-3 py-1.5 font-mono text-xs font-medium text-primary">
                   <Sparkles
                     size={14}
-                    className="text-[#D400D1]"
+                    className="text-primary"
                   />
 
-                  <span className="text-xs font-semibold">
+                  <span>
                     Start your journey
                   </span>
                 </div>
 
-                <h1 className="max-w-md text-4xl font-bold leading-tight">
+                <h1 className="max-w-md font-serif text-4xl font-medium leading-tight text-ink">
                   Build skills.
                   <br />
                   Build momentum.
                   <br />
-                  Go further.
+                  <span className="text-primary">Go further.</span>
                 </h1>
 
-                <p className="mt-5 max-w-md leading-7 text-white/60">
+                <p className="mt-5 max-w-md leading-relaxed text-xs font-sans text-ink-muted">
                   Join UNIGAP and turn your learning goals into
                   daily progress with courses, XP, streaks,
                   achievements, and an AI companion.
@@ -99,7 +94,7 @@ export default function RegisterPage() {
 
             {/* BENEFITS */}
 
-            <div className="relative mt-12 space-y-3">
+            <div className="relative mt-12 space-y-3 font-mono text-xs text-ink-muted">
 
               {[
                 "Structured courses",
@@ -108,12 +103,11 @@ export default function RegisterPage() {
               ].map((item) => (
                 <div
                   key={item}
-                  className="flex items-center gap-3 text-sm text-white/70"
+                  className="flex items-center gap-3"
                 >
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#D400D1]/15">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent/15 border border-accent/30 text-accent">
                     <Check
-                      size={13}
-                      className="text-[#D400D1]"
+                      size={12}
                     />
                   </span>
 
@@ -127,21 +121,21 @@ export default function RegisterPage() {
 
           {/* RIGHT SIDE */}
 
-          <div className="p-8 sm:p-12">
+          <div className="p-8 sm:p-12 bg-surface">
 
             <div className="mx-auto max-w-md">
 
               <div className="mb-8">
 
-                <p className="text-sm font-semibold text-[#920090]">
+                <p className="font-mono text-xs font-semibold text-primary uppercase tracking-wider">
                   UNIGAP LMS
                 </p>
 
-                <h2 className="mt-2 text-3xl font-bold tracking-tight text-[#520051]">
+                <h2 className="mt-2 font-serif text-3xl font-medium tracking-tight text-ink">
                   Create your account
                 </h2>
 
-                <p className="mt-2 text-sm text-slate-500">
+                <p className="mt-2 text-xs font-mono text-ink-muted">
                   Start your learning journey today.
                 </p>
 
@@ -149,7 +143,7 @@ export default function RegisterPage() {
 
               {/* Error Alert */}
               {errorMsg && (
-                <div className="mb-6 flex items-center gap-2 rounded-xl bg-red-50 p-3.5 text-xs font-medium text-red-600 border border-red-100">
+                <div className="mb-6 flex items-center gap-2 rounded-[4px] bg-red-500/10 p-3.5 text-xs font-mono text-red-600 dark:text-red-400 border border-red-500/30">
                   <AlertCircle size={16} className="shrink-0" />
                   <span>{errorMsg}</span>
                 </div>
@@ -166,7 +160,7 @@ export default function RegisterPage() {
 
                   <label
                     htmlFor="fullName"
-                    className="mb-2 block text-sm font-semibold text-[#520051]"
+                    className="mb-1.5 block text-xs font-mono text-ink-muted"
                   >
                     Full name
                   </label>
@@ -180,7 +174,7 @@ export default function RegisterPage() {
                     placeholder="Your full name"
                     required
                     disabled={isLoading}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#920090] focus:ring-4 focus:ring-[#920090]/10 disabled:bg-slate-50"
+                    className="w-full rounded-[4px] border border-border bg-surface-2 px-4 py-3 text-xs text-ink placeholder:text-ink-muted outline-none transition focus:border-primary disabled:opacity-50"
                   />
 
                 </div>
@@ -191,7 +185,7 @@ export default function RegisterPage() {
 
                   <label
                     htmlFor="email"
-                    className="mb-2 block text-sm font-semibold text-[#520051]"
+                    className="mb-1.5 block text-xs font-mono text-ink-muted"
                   >
                     Email address
                   </label>
@@ -205,7 +199,7 @@ export default function RegisterPage() {
                     placeholder="you@example.com"
                     required
                     disabled={isLoading}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#920090] focus:ring-4 focus:ring-[#920090]/10 disabled:bg-slate-50"
+                    className="w-full rounded-[4px] border border-border bg-surface-2 px-4 py-3 text-xs text-ink placeholder:text-ink-muted outline-none transition focus:border-primary disabled:opacity-50"
                   />
 
                 </div>
@@ -216,7 +210,7 @@ export default function RegisterPage() {
 
                   <label
                     htmlFor="password"
-                    className="mb-2 block text-sm font-semibold text-[#520051]"
+                    className="mb-1.5 block text-xs font-mono text-ink-muted"
                   >
                     Password
                   </label>
@@ -231,7 +225,7 @@ export default function RegisterPage() {
                     required
                     minLength={6}
                     disabled={isLoading}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#920090] focus:ring-4 focus:ring-[#920090]/10 disabled:bg-slate-50"
+                    className="w-full rounded-[4px] border border-border bg-surface-2 px-4 py-3 text-xs text-ink placeholder:text-ink-muted outline-none transition focus:border-primary disabled:opacity-50"
                   />
 
                 </div>
@@ -242,7 +236,7 @@ export default function RegisterPage() {
 
                   <label
                     htmlFor="confirmPassword"
-                    className="mb-2 block text-sm font-semibold text-[#520051]"
+                    className="mb-1.5 block text-xs font-mono text-ink-muted"
                   >
                     Confirm password
                   </label>
@@ -257,7 +251,7 @@ export default function RegisterPage() {
                     required
                     minLength={6}
                     disabled={isLoading}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#920090] focus:ring-4 focus:ring-[#920090]/10 disabled:bg-slate-50"
+                    className="w-full rounded-[4px] border border-border bg-surface-2 px-4 py-3 text-xs text-ink placeholder:text-ink-muted outline-none transition focus:border-primary disabled:opacity-50"
                   />
 
                 </div>
@@ -270,16 +264,16 @@ export default function RegisterPage() {
                     type="checkbox"
                     required
                     disabled={isLoading}
-                    className="mt-1 h-4 w-4 rounded border-slate-300 accent-[#920090]"
+                    className="mt-1 h-4 w-4 rounded-[2px] border-border bg-surface-2 accent-primary"
                   />
 
-                  <span className="text-xs leading-5 text-slate-500">
+                  <span className="text-xs leading-5 text-ink-muted font-mono">
                     I agree to the UNIGAP{" "}
-                    <span className="font-semibold text-[#920090]">
+                    <span className="font-semibold text-primary">
                       Terms of Service
                     </span>{" "}
                     and{" "}
-                    <span className="font-semibold text-[#920090]">
+                    <span className="font-semibold text-primary">
                       Privacy Policy
                     </span>
                     .
@@ -292,7 +286,7 @@ export default function RegisterPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="group flex w-full items-center justify-center gap-2 rounded-xl bg-[#520051] px-5 py-3.5 text-sm font-bold text-white transition hover:bg-[#920090] disabled:opacity-70"
+                  className="group flex w-full items-center justify-center gap-2 rounded-[4px] bg-primary px-5 py-3.5 text-xs font-semibold text-primary-fg transition hover:opacity-90 disabled:opacity-70 shadow-sm"
                 >
                   {isLoading ? (
                     <>
@@ -313,13 +307,13 @@ export default function RegisterPage() {
 
               {/* LOGIN */}
 
-              <p className="mt-8 text-center text-sm text-slate-500">
+              <p className="mt-8 text-center text-xs font-mono text-ink-muted">
 
                 Already have an account?
 
                 <Link
                   href="/login"
-                  className="ml-1 font-semibold text-[#920090] hover:text-[#D400D1]"
+                  className="ml-1 font-semibold text-primary hover:underline"
                 >
                   Login
                 </Link>

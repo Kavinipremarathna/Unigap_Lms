@@ -3,16 +3,14 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { loginWithNestJS } from "@/lib/services/auth.service";
-import { Lock, ArrowRight, AlertCircle, Loader2 } from "lucide-react";
+import { Lock, ArrowRight, ShieldCheck } from "lucide-react";
+import { Logo } from "@/components/layout/logo";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [redirectUrl, setRedirectUrl] = useState("/dashboard");
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -24,63 +22,77 @@ export default function LoginPage() {
     }
   }, []);
 
-  const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
     event.preventDefault();
+
     if (!email.trim() || !password) return;
 
-    setIsLoading(true);
-    setErrorMsg("");
-
     try {
-      const { user } = await loginWithNestJS(email, password);
-      
-      // If superadmin or admin, redirect to admin panel
-      if (user.role === "SUPER_ADMIN" || user.role === "ADMIN") {
-        router.push("/admin");
-      } else {
-        router.push(redirectUrl);
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message || "Invalid email or password.");
+        return;
       }
-    } catch (err: any) {
-      setErrorMsg(err.message || "Failed to log in. Please check your credentials.");
-    } finally {
-      setIsLoading(false);
+
+      if (redirectUrl !== "/dashboard") {
+        router.push(redirectUrl);
+        return;
+      }
+
+      if (data.user.role === "SUPER_ADMIN") {
+        router.push("/admin");
+        return;
+      }
+
+      if (data.user.role === "ADMIN") {
+        router.push("/admin");
+        return;
+      }
+
+      router.push("/dashboard");
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("Unable to connect to the server. Please try again.");
     }
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#faf7fb] px-5 py-12">
-      <div className="w-full max-w-md rounded-3xl border border-[#920090]/10 bg-white p-8 shadow-xl">
+    <main className="flex min-h-screen items-center justify-center bg-bg text-ink px-5 py-12 transition-colors">
+      <div className="w-full max-w-md rounded-[4px] border border-border bg-surface p-8 shadow-xl">
         {/* Header */}
-        <div className="mb-8 text-center">
-          <Link
-            href="/"
-            className="text-2xl font-extrabold text-[#520051] tracking-tight"
-          >
-            UNIGAP
+        <div className="mb-8 text-center flex flex-col items-center">
+          <Link href="/" aria-label="UNIGAP home">
+            <Logo />
           </Link>
 
-          <h1 className="mt-6 text-2xl font-bold text-[#520051]">
+          <h1 className="mt-6 font-serif text-2xl font-medium text-ink">
             Welcome Back
           </h1>
 
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs font-mono text-ink-muted">
             Log in to access your enrolled courses and continue learning.
           </p>
 
           {redirectUrl !== "/dashboard" && (
-            <div className="mt-4 flex items-center justify-center gap-1.5 rounded-xl bg-purple-50 p-2.5 text-xs font-bold text-[#920090] border border-purple-100">
+            <div className="mt-4 flex items-center justify-center gap-1.5 rounded-[4px] bg-primary/15 p-2.5 text-xs font-mono font-medium text-primary border border-primary/30">
               <Lock size={14} /> Log in required to complete course enrollment
             </div>
           )}
         </div>
-
-        {/* Error Alert */}
-        {errorMsg && (
-          <div className="mb-6 flex items-center gap-2 rounded-xl bg-red-50 p-3.5 text-xs font-medium text-red-600 border border-red-100">
-            <AlertCircle size={16} className="shrink-0" />
-            <span>{errorMsg}</span>
-          </div>
-        )}
 
         {/* Login Form */}
         <form onSubmit={handleLogin} className="space-y-4">
@@ -88,7 +100,7 @@ export default function LoginPage() {
           <div>
             <label
               htmlFor="email"
-              className="mb-1 block text-xs font-bold text-[#520051]"
+              className="mb-1.5 block text-xs font-mono text-ink-muted"
             >
               Email Address
             </label>
@@ -101,8 +113,7 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               required
-              disabled={isLoading}
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-xs outline-none transition focus:border-[#920090] focus:ring-4 focus:ring-[#920090]/10 disabled:bg-slate-50"
+              className="w-full rounded-[4px] border border-border bg-surface-2 px-4 py-3 text-xs text-ink placeholder:text-ink-muted outline-none transition focus:border-primary"
             />
           </div>
 
@@ -110,7 +121,7 @@ export default function LoginPage() {
           <div>
             <label
               htmlFor="password"
-              className="mb-1 block text-xs font-bold text-[#520051]"
+              className="mb-1.5 block text-xs font-mono text-ink-muted"
             >
               Password
             </label>
@@ -123,47 +134,37 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
-              disabled={isLoading}
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-xs outline-none transition focus:border-[#920090] focus:ring-4 focus:ring-[#920090]/10 disabled:bg-slate-50"
+              className="w-full rounded-[4px] border border-border bg-surface-2 px-4 py-3 text-xs text-ink placeholder:text-ink-muted outline-none transition focus:border-primary"
             />
           </div>
 
-          {/* Submit Button */}
+          {/* Login */}
           <button
             type="submit"
-            disabled={isLoading}
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#520051] px-5 py-3.5 text-xs font-bold text-white transition hover:bg-[#920090] shadow-xs disabled:opacity-70"
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-[4px] bg-primary px-5 py-3.5 text-xs font-semibold text-primary-fg transition hover:opacity-90 shadow-sm"
           >
-            {isLoading ? (
-              <>
-                <Loader2 size={16} className="animate-spin" /> Authenticating...
-              </>
-            ) : (
-              <>
-                Log In & Continue <ArrowRight size={16} />
-              </>
-            )}
+            Log In & Continue <ArrowRight size={16} />
           </button>
         </form>
 
         {/* Links */}
-        <div className="mt-6 space-y-3 text-center text-xs">
-          <p className="text-slate-500">
+        <div className="mt-6 space-y-3 text-center text-xs font-mono">
+          <p className="text-ink-muted">
             Don&apos;t have an account?{" "}
             <Link
               href={`/register${redirectUrl !== "/dashboard" ? `?redirect=${encodeURIComponent(redirectUrl)}` : ""}`}
-              className="font-bold text-[#920090] hover:underline"
+              className="font-semibold text-primary hover:underline"
             >
               Create Account
             </Link>
           </p>
 
-          <div className="my-4 border-t border-slate-100" />
+          <div className="my-4 border-t border-border" />
 
           <p>
             <Link
               href="/admin/login"
-              className="font-bold text-[#520051] hover:text-[#920090]"
+              className="font-medium text-ink-muted hover:text-ink"
             >
               Log in as Admin
             </Link>

@@ -229,8 +229,52 @@ export default function AdminUsersDirectoryPage() {
                       <td className="px-6 py-4 text-slate-500">{user.joinedDate}</td>
 
                       <td className="px-6 py-4 text-right">
-                        <span className="text-xs font-semibold text-[#920090]">Active User</span>
+                        {user.role === "admin" || (user.role as string) === "SUPER_ADMIN" || (user.role as string) === "ADMIN" ? (
+                          <button
+
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                await fetch("/api/admin/users/assign-role", {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ targetUserEmail: user.email, newRole: "STUDENT" }),
+                                });
+                                const updated = usersList.map((u) => u.id === user.id ? { ...u, role: "learner" as const } : u);
+                                setUsersList(updated);
+                                alert(`Admin login access removed for ${user.email}.`);
+                              } catch {
+                                alert("Failed to update role.");
+                              }
+                            }}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-bold text-red-600 hover:bg-red-100 transition"
+                          >
+                            Revoke Admin
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                await fetch("/api/admin/users/assign-role", {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ targetUserEmail: user.email, newRole: "ADMIN" }),
+                                });
+                                const updated = usersList.map((u) => u.id === user.id ? { ...u, role: "admin" as const } : u);
+                                setUsersList(updated);
+                                alert(`Admin login access granted to ${user.email} by Super Admin in PostgreSQL.`);
+                              } catch {
+                                alert("Failed to assign Admin access.");
+                              }
+                            }}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-[#920090]/30 bg-[#fde8fc] px-2.5 py-1 text-xs font-bold text-[#920090] hover:bg-[#920090] hover:text-white transition"
+                          >
+                            <UserCheck size={13} /> Assign Admin
+                          </button>
+                        )}
                       </td>
+
                     </tr>
                   ))}
                 </tbody>

@@ -8,7 +8,7 @@ export function ProgressRing({
   strokeWidth = 9,
   label,
   sublabel,
-  colorVar = "--primary",
+  colorVar = "var(--primary)",
 }: {
   value: number; // 0-100
   size?: number;
@@ -29,7 +29,7 @@ export function ProgressRing({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="hsl(var(--surface-2))"
+          stroke="var(--border)"
           strokeWidth={strokeWidth}
         />
         <motion.circle
@@ -37,7 +37,7 @@ export function ProgressRing({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke={`hsl(var(${colorVar}))`}
+          stroke={colorVar}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}
@@ -47,9 +47,11 @@ export function ProgressRing({
         />
       </svg>
       <div className="absolute flex flex-col items-center justify-center text-center">
-        <span className="text-lg font-bold text-ink">{label}</span>
-        {sublabel && <span className="text-[10px] font-medium text-ink-muted">{sublabel}</span>}
+        <span className="font-mono text-lg font-bold text-ink">{label}</span>
+        {sublabel && <span className="font-mono text-[10px] text-ink-muted">{sublabel}</span>}
       </div>
     </div>
   );
 }
+
+

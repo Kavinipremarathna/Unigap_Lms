@@ -28,14 +28,22 @@ export function CourseThumb({
 
   return (
     <div
-      className={className}
-      style={{
-        background: `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})`,
-      }}
+      className={`${className} relative overflow-hidden bg-surface-2 border-b border-border`}
     >
-      <div className="flex h-full w-full items-center justify-center">
-        <Icon size={36} className="text-white/90" strokeWidth={1.6} />
+      {/* Subtle background glow */}
+      <div 
+        className="absolute inset-0 opacity-20"
+        style={{
+          background: `radial-gradient(circle at 50% 40%, var(--primary) 0%, transparent 70%)`
+        }}
+      />
+      <div className="relative flex h-full w-full items-center justify-center">
+        <div className="flex h-12 w-12 items-center justify-center rounded-[4px] border border-border bg-surface/90 shadow-sm">
+          <Icon size={24} className="text-primary" strokeWidth={1.75} />
+        </div>
       </div>
     </div>
   );
 }
+
+

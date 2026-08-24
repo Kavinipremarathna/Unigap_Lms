@@ -14,7 +14,9 @@ import {
 import { CourseCard } from "@/components/courses/course-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { SubpageHeroHeader } from "@/components/ui/subpage-hero-header";
 import { cn } from "@/lib/utils";
+
 import { getStoredCourses, categories as defaultCategories } from "@/lib/mock/courses";
 import { Level, Course } from "@/lib/types";
 
@@ -88,60 +90,38 @@ export function CourseExplorer({ variant = "public" }: CourseExplorerProps) {
 
   return (
     <div className={isDashboard ? "container-app py-8" : "container-app py-10"}>
-      {/* Header section */}
-      {isDashboard ? (
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#520051] via-[#920090] to-[#D400D1] p-6 text-white shadow-lg sm:p-8">
-          <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="max-w-xl">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold backdrop-blur-md">
-                <Compass size={14} className="text-pink-200" /> Course Catalog
-              </span>
-              <h1 className="mt-3 text-2xl font-extrabold tracking-tight sm:text-3xl lg:text-4xl">
-                Explore Courses
-              </h1>
-              <p className="mt-2 text-sm text-purple-100 sm:text-base">
-                Discover industry-aligned curriculum, master real-world skills, and earn verified certificates.
-              </p>
+      {/* Unified Header Section */}
+      <SubpageHeroHeader
+        icon={Compass}
+        badgeText="Course Catalog"
+        title="Explore Courses"
+        description="Discover industry-aligned curriculum, master real-world skills, and earn verified certificates across UNIGAP."
+        rightContent={
+          <div className="flex items-center gap-3">
+            <div className="rounded-[4px] border border-border bg-surface p-3.5 sm:min-w-[120px]">
+              <div className="flex items-center gap-2 text-ink-muted">
+                <BookOpen size={16} />
+                <span className="text-xs font-mono uppercase tracking-wider">Courses</span>
+              </div>
+              <p className="mt-1 font-mono text-xl font-bold text-primary sm:text-2xl">{allCourses.length}</p>
             </div>
 
-            {/* Quick Metrics */}
-            <div className="grid grid-cols-2 gap-3 sm:flex sm:items-center sm:gap-4">
-              <div className="rounded-2xl border border-white/15 bg-white/10 p-3.5 backdrop-blur-md sm:min-w-[120px]">
-                <div className="flex items-center gap-2 text-purple-200">
-                  <BookOpen size={16} />
-                  <span className="text-xs font-medium uppercase tracking-wider">Courses</span>
-                </div>
-                <p className="mt-1 text-xl font-bold sm:text-2xl">{allCourses.length}</p>
+            <div className="rounded-[4px] border border-border bg-surface p-3.5 sm:min-w-[120px]">
+              <div className="flex items-center gap-2 text-ink-muted">
+                <Layers size={16} />
+                <span className="text-xs font-mono uppercase tracking-wider">Tracks</span>
               </div>
-
-              <div className="rounded-2xl border border-white/15 bg-white/10 p-3.5 backdrop-blur-md sm:min-w-[120px]">
-                <div className="flex items-center gap-2 text-purple-200">
-                  <Layers size={16} />
-                  <span className="text-xs font-medium uppercase tracking-wider">Tracks</span>
-                </div>
-                <p className="mt-1 text-xl font-bold sm:text-2xl">{categories.length}</p>
-              </div>
+              <p className="mt-1 font-mono text-xl font-bold text-accent sm:text-2xl">{categories.length}</p>
             </div>
           </div>
-        </div>
-      ) : (
-        <div>
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-primary">
-            <Sparkles size={14} /> Comprehensive Catalog
-          </div>
-          <h1 className="mt-3 text-3xl font-bold tracking-tight text-ink sm:text-4xl">
-            Explore Courses
-          </h1>
-          <p className="mt-2 text-base text-ink-muted">
-            {allCourses.length} courses across web development, data science, cloud architecture, design, and more.
-          </p>
-        </div>
-      )}
+        }
+      />
+
 
       {/* Search & Control Bar */}
       <div className={cn("mt-8 space-y-4", isDashboard && "mt-6")}>
-        <div className="relative flex items-center rounded-2xl border border-border bg-surface px-4 py-3 shadow-sm transition-all focus-within:border-primary/40 focus-within:ring-4 focus-within:ring-primary/10">
-          <Search size={20} className="text-ink-muted shrink-0" />
+        <div className="relative flex items-center rounded-[4px] border border-border bg-surface px-4 py-3 shadow-sm transition-all focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+          <Search size={18} className="text-ink-muted shrink-0" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -153,7 +133,7 @@ export function CourseExplorer({ variant = "public" }: CourseExplorerProps) {
             <button
               type="button"
               onClick={() => setQuery("")}
-              className="rounded-full p-1 text-ink-muted hover:bg-surface-2 hover:text-ink"
+              className="rounded-[4px] p-1 text-ink-muted hover:bg-surface-2 hover:text-ink"
               aria-label="Clear search"
             >
               <X size={16} />
@@ -167,10 +147,10 @@ export function CourseExplorer({ variant = "public" }: CourseExplorerProps) {
             type="button"
             onClick={() => setCategory(null)}
             className={cn(
-              "rounded-full px-3.5 py-1.5 text-xs font-semibold transition",
+              "rounded-[4px] px-3.5 py-1.5 text-xs font-mono font-medium transition",
               category === null
-                ? "bg-[#520051] text-white shadow-sm"
-                : "bg-surface-2 text-ink-muted hover:bg-border/60 hover:text-ink"
+                ? "bg-primary text-primary-fg font-semibold"
+                : "bg-surface border border-border text-ink-muted hover:bg-surface-2 hover:text-ink"
             )}
           >
             All Categories ({allCourses.length})
@@ -184,17 +164,17 @@ export function CourseExplorer({ variant = "public" }: CourseExplorerProps) {
                 type="button"
                 onClick={() => setCategory(isSelected ? null : c)}
                 className={cn(
-                  "rounded-full px-3.5 py-1.5 text-xs font-semibold transition flex items-center gap-1.5",
+                  "rounded-[4px] px-3.5 py-1.5 text-xs font-mono font-medium transition flex items-center gap-1.5",
                   isSelected
-                    ? "bg-[#520051] text-white shadow-sm"
-                    : "bg-surface-2 text-ink-muted hover:bg-border/60 hover:text-ink"
+                    ? "bg-primary text-primary-fg font-semibold"
+                    : "bg-surface border border-border text-ink-muted hover:bg-surface-2 hover:text-ink"
                 )}
               >
                 <span>{c}</span>
                 <span
                   className={cn(
                     "rounded-full px-1.5 py-0.2 text-[10px]",
-                    isSelected ? "bg-white/20 text-white" : "bg-border text-ink-muted"
+                    isSelected ? "bg-primary-fg/20 text-primary-fg" : "bg-surface-2 text-ink-muted"
                   )}
                 >
                   {count}
@@ -207,7 +187,7 @@ export function CourseExplorer({ variant = "public" }: CourseExplorerProps) {
         {/* Results Header */}
         <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
           <div className="flex items-center gap-2">
-            <p className="text-sm font-bold text-ink">
+            <p className="font-serif text-base font-medium text-ink">
               {category ? `${category} Courses` : "All Courses"}
             </p>
             <Badge variant="default" className="text-xs">
@@ -216,7 +196,7 @@ export function CourseExplorer({ variant = "public" }: CourseExplorerProps) {
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="text-xs text-ink-muted">
+            <span className="text-xs font-mono text-ink-muted">
               Showing <strong className="text-ink">{filtered.length}</strong> of {allCourses.length}
             </span>
           </div>
@@ -225,7 +205,7 @@ export function CourseExplorer({ variant = "public" }: CourseExplorerProps) {
         {/* Secondary Filters & Sorter */}
         <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium text-ink-muted">Level:</span>
+            <span className="text-xs font-mono text-ink-muted">Level:</span>
             {levels.map((l) => {
               const isSelected = level === l;
               return (
@@ -234,9 +214,9 @@ export function CourseExplorer({ variant = "public" }: CourseExplorerProps) {
                   type="button"
                   onClick={() => setLevel(isSelected ? null : l)}
                   className={cn(
-                    "rounded-lg border px-3 py-1.5 text-xs font-semibold transition",
+                    "rounded-[4px] border px-3 py-1.5 text-xs font-mono font-medium transition",
                     isSelected
-                      ? "border-primary bg-primary-50 text-primary shadow-xs"
+                      ? "border-primary bg-primary/15 text-primary"
                       : "border-border bg-surface text-ink-muted hover:bg-surface-2 hover:text-ink"
                   )}
                 >
@@ -249,7 +229,7 @@ export function CourseExplorer({ variant = "public" }: CourseExplorerProps) {
               <button
                 type="button"
                 onClick={resetFilters}
-                className="inline-flex items-center gap-1 rounded-lg border border-dashed border-border px-2.5 py-1.5 text-xs font-medium text-ink-muted transition hover:border-error/50 hover:text-error"
+                className="inline-flex items-center gap-1 rounded-[4px] border border-dashed border-border px-2.5 py-1.5 text-xs font-mono text-ink-muted transition hover:border-red-500/50 hover:text-red-500"
               >
                 <X size={13} /> Reset filters
               </button>
@@ -257,21 +237,18 @@ export function CourseExplorer({ variant = "public" }: CourseExplorerProps) {
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="text-xs text-ink-muted">
-              Showing <strong className="text-ink">{filtered.length}</strong> of {allCourses.length}
-            </span>
             <div className="flex items-center gap-2">
               <SlidersHorizontal size={15} className="text-ink-muted hidden sm:block" />
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value as Sort)}
-                className="rounded-xl border border-border bg-surface px-3 py-1.5 text-xs font-medium text-ink focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className="rounded-[4px] border border-border bg-surface px-3 py-1.5 text-xs font-mono text-ink focus:border-primary focus:outline-none"
                 aria-label="Sort courses"
               >
-                <option value="popular">Most Popular</option>
-                <option value="rating">Highest Rated</option>
-                <option value="newest">Newest</option>
-                <option value="price-low">Price: Low to High</option>
+                <option value="popular" className="bg-surface text-ink">Most Popular</option>
+                <option value="rating" className="bg-surface text-ink">Highest Rated</option>
+                <option value="newest" className="bg-surface text-ink">Newest</option>
+                <option value="price-low" className="bg-surface text-ink">Price: Low to High</option>
               </select>
             </div>
           </div>
@@ -286,14 +263,14 @@ export function CourseExplorer({ variant = "public" }: CourseExplorerProps) {
           ))}
         </div>
       ) : (
-        <div className="mt-12 flex flex-col items-center rounded-3xl border border-dashed border-border bg-surface p-12 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-2 text-[#520051]">
+        <div className="mt-12 flex flex-col items-center rounded-[4px] border border-dashed border-border bg-surface p-12 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-2 text-primary">
             <BookOpen size={28} />
           </div>
-          <h3 className="mt-4 text-lg font-bold text-[#520051]">
+          <h3 className="mt-4 font-serif text-lg font-medium text-ink">
             {allCourses.length === 0 ? "No published courses yet" : "No courses match your search criteria"}
           </h3>
-          <p className="mt-1 max-w-md text-xs text-slate-500">
+          <p className="mt-1 max-w-md text-xs text-ink-muted">
             {allCourses.length === 0
               ? "The course catalog is currently empty. Published courses created by administrators will appear here automatically."
               : "We couldn't find any courses matching your search or filters. Try clearing your search or filters."}
@@ -308,3 +285,5 @@ export function CourseExplorer({ variant = "public" }: CourseExplorerProps) {
     </div>
   );
 }
+
+

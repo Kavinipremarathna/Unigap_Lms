@@ -23,10 +23,42 @@ const DEFAULT_STATS: UserStats = {
   lessonProgress: {},
 };
 
+function getStorageKey(): string {
+  if (typeof window === "undefined") return "unigap_user_stats";
+  try {
+    const storedUser = localStorage.getItem("unigap_auth_user");
+    if (storedUser) {
+      const u = JSON.parse(storedUser);
+      const keyId = u.id || u.email;
+      if (keyId) {
+        return `unigap_user_stats_${keyId}`;
+      }
+    }
+  } catch {
+    // fallback
+  }
+  return "unigap_user_stats";
+}
+
+function getUserEmail(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const storedUser = localStorage.getItem("unigap_auth_user");
+    if (storedUser) {
+      const u = JSON.parse(storedUser);
+      return u.email || null;
+    }
+  } catch {
+    // fallback
+  }
+  return null;
+}
+
 export function getUserStats(): UserStats {
   if (typeof window === "undefined") return DEFAULT_STATS;
   try {
-    const data = localStorage.getItem("unigap_user_stats");
+    const key = getStorageKey();
+    const data = localStorage.getItem(key);
     if (!data) return DEFAULT_STATS;
     const parsed = JSON.parse(data);
     return { ...DEFAULT_STATS, ...parsed };
@@ -35,13 +67,32 @@ export function getUserStats(): UserStats {
   }
 }
 
-export function saveUserStats(stats: Partial<UserStats>): UserStats {
+export function saveUserStats(stats: Partial<UserStats>, courseIdToSync?: string): UserStats {
   if (typeof window === "undefined") return DEFAULT_STATS;
   const current = getUserStats();
   const updated: UserStats = { ...current, ...stats };
   try {
-    localStorage.setItem("unigap_user_stats", JSON.stringify(updated));
+    const key = getStorageKey();
+    localStorage.setItem(key, JSON.stringify(updated));
     window.dispatchEvent(new Event("unigap_user_stats_updated"));
+
+    // Sync directly to PostgreSQL database via API
+    const email = getUserEmail();
+    if (email) {
+      fetch("/api/user/stats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          streak: updated.streak,
+          xp: updated.xp,
+          level: updated.level,
+          minutesDone: updated.minutesDone,
+          completedLessons: updated.completedLessons,
+          courseId: courseIdToSync,
+        }),
+      }).catch((err) => console.error("PostgreSQL stats sync error:", err));
+    }
   } catch {
     // fallback
   }
@@ -60,7 +111,7 @@ export function enrollInCourse(course: Course): void {
       enrolledCourseIds: updatedIds,
       lessonProgress: initialProgress,
       xp: stats.xp + 100, // reward 100 XP for enrolling in a new course
-    });
+    }, course.id);
 
     // Increase course learners count by 1 in real time
     saveCustomCourse({
@@ -86,3 +137,4 @@ export function getEnrolledUserCourses(): Course[] {
       };
     });
 }
+

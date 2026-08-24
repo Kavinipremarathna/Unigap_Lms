@@ -1,6 +1,10 @@
-import { Award, Download, Eye } from "lucide-react";
+"use client";
+
+import { Award, Download, Eye, GraduationCap } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { SubpageHeroHeader } from "@/components/ui/subpage-hero-header";
+
 
 const certificates = [
   { id: "cert-1", course: "Python Programming", date: "Jun 14, 2026", certId: "UNIGAP-2026-03127" },
@@ -9,8 +13,19 @@ const certificates = [
 export default function CertificatesPage() {
   return (
     <div className="container-app py-8">
-      <h1 className="text-2xl font-bold text-ink">Certificates</h1>
-      <p className="mt-1 text-sm text-ink-muted">Verified proof of what you&apos;ve completed.</p>
+      <SubpageHeroHeader
+        icon={Award}
+        badgeText="Verified Credentials"
+        title="Your Certificates"
+        description="View and download verified digital certificates of completion for your completed courses."
+        rightContent={
+          <div className="rounded-[4px] border border-border bg-surface p-3.5 min-w-[140px] text-center">
+            <span className="font-mono text-xs text-ink-muted uppercase">Total Earned</span>
+            <p className="mt-1 font-mono text-2xl font-bold text-primary">{certificates.length}</p>
+          </div>
+        }
+      />
+
 
       {certificates.length > 0 ? (
         <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">

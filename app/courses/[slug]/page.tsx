@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
+import { Badge } from "@/components/ui/badge";
 import { getStoredCourses } from "@/lib/mock/courses";
 import { getUserStats, enrollInCourse, saveUserStats } from "@/lib/services/user-progress";
 import { isUserAuthenticated } from "@/lib/services/auth.service";
@@ -168,12 +169,12 @@ export default function CourseDetailPage() {
 
   if (!course) {
     return (
-      <div className="flex min-h-screen flex-col bg-[#faf5fa]">
+      <div className="flex min-h-screen flex-col bg-bg text-ink transition-colors">
         <Navbar />
         <main className="container-app flex flex-1 flex-col items-center justify-center p-12 text-center">
-          <BookOpen size={40} className="text-[#520051]" />
-          <h2 className="mt-4 text-xl font-bold text-[#520051]">Loading Course...</h2>
-          <p className="mt-1 text-xs text-slate-500">Retrieving curriculum and enrollment data.</p>
+          <BookOpen size={40} className="text-primary" />
+          <h2 className="mt-4 font-serif text-xl font-medium text-ink">Loading Course...</h2>
+          <p className="mt-1 text-xs font-mono text-ink-muted">Retrieving curriculum and enrollment data.</p>
         </main>
         <Footer />
       </div>
@@ -181,102 +182,102 @@ export default function CourseDetailPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#faf5fa]">
+    <div className="flex min-h-screen flex-col bg-bg text-ink transition-colors">
       <Navbar />
 
       {/* Top Banner / Course Header */}
-      <section className="bg-gradient-to-r from-[#520051] via-[#920090] to-[#D400D1] text-white py-10 px-6 shadow-md">
+      <section className="border-b border-border bg-surface py-10 px-6">
         <div className="container-app">
           <Link
             href="/courses"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-200 hover:text-white mb-4"
+            className="inline-flex items-center gap-1.5 text-xs font-mono text-primary hover:underline mb-4"
           >
             <ArrowLeft size={14} /> Back to Course Catalog
           </Link>
 
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div className="max-w-2xl">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-bold backdrop-blur-xs">
+              <div className="flex flex-wrap items-center gap-2 font-mono">
+                <span className="rounded-full bg-surface-2 border border-border px-3 py-0.5 text-xs font-medium text-ink-muted">
                   {course.category}
                 </span>
-                <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold backdrop-blur-xs">
+                <span className="rounded-full bg-surface-2 border border-border px-3 py-0.5 text-xs font-medium text-ink-muted">
                   {course.level}
                 </span>
                 {isEnrolled && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/20 px-3 py-1 text-xs font-bold text-emerald-200 border border-emerald-300/40">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-accent/15 px-3 py-0.5 text-xs font-medium text-accent border border-accent/30">
                     <CheckCircle2 size={13} /> Enrolled Learner
                   </span>
                 )}
               </div>
 
-              <h1 className="mt-3 text-2xl font-extrabold sm:text-3xl lg:text-4xl leading-tight">
+              <h1 className="mt-4 font-serif text-2xl font-medium sm:text-3xl lg:text-4xl text-ink leading-tight">
                 {course.title}
               </h1>
 
-              <p className="mt-3 text-sm text-purple-100 leading-relaxed">
+              <p className="mt-3 text-sm text-ink-muted leading-relaxed">
                 {course.shortDescription || course.description}
               </p>
 
-              <div className="mt-6 flex flex-wrap items-center gap-6 text-xs text-purple-100">
-                <div className="flex items-center gap-1.5 font-medium">
-                  <BookOpen size={16} className="text-yellow-300" />
+              <div className="mt-6 flex flex-wrap items-center gap-6 text-xs font-mono text-ink-muted">
+                <div className="flex items-center gap-1.5">
+                  <BookOpen size={16} className="text-primary" />
                   <span>{course.durationHours || 8} Hours of Content</span>
                 </div>
-                <div className="flex items-center gap-1.5 font-medium">
-                  <Star size={16} className="text-amber-300 fill-amber-300" />
+                <div className="flex items-center gap-1.5">
+                  <Star size={16} className="text-primary fill-primary" />
                   <span>{course.rating || 5.0} Rating</span>
                 </div>
-                <div className="flex items-center gap-1.5 font-medium">
-                  <Users size={16} className="text-purple-200" />
+                <div className="flex items-center gap-1.5">
+                  <Users size={16} className="text-ink-muted" />
                   <span>{(course.learners || 0).toLocaleString()} Enrolled Students</span>
                 </div>
               </div>
             </div>
 
             {/* Quick Enrollment Card */}
-            <div className="w-full max-w-sm rounded-3xl bg-white p-6 text-slate-800 shadow-2xl">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div className="w-full max-w-sm rounded-[4px] border border-border bg-surface-2 p-6 text-ink shadow-xl">
+              <div className="flex items-center justify-between border-b border-border pb-4">
                 <div>
-                  <span className="text-xs font-semibold text-slate-400">Course Access</span>
-                  <p className="text-2xl font-extrabold text-[#520051]">
+                  <span className="text-xs font-mono text-ink-muted">Course Access</span>
+                  <p className="font-mono text-2xl font-bold text-primary">
                     {course.isFree || course.price === 0 ? "Free Access" : `$${course.price}`}
                   </p>
                 </div>
-                <span className="rounded-2xl bg-[#faf5fa] p-3 text-[#520051]">
+                <span className="rounded-[4px] border border-primary/30 bg-primary/10 p-3 text-primary">
                   <Award size={28} />
                 </span>
               </div>
 
-              <div className="mt-4 space-y-2.5 text-xs text-slate-600">
+              <div className="mt-4 space-y-2.5 text-xs text-ink-muted">
                 <div className="flex items-center gap-2">
-                  <ShieldCheck size={16} className="text-emerald-600" />
+                  <ShieldCheck size={16} className="text-accent" />
                   <span>Full Lifetime Access</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Zap size={16} className="text-[#920090]" />
+                  <Zap size={16} className="text-primary" />
                   <span>Verified Completion Certificate</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Sparkles size={16} className="text-amber-500" />
+                  <Sparkles size={16} className="text-primary" />
                   <span>Interactive Exercises & Quizzes</span>
                 </div>
               </div>
 
               {isEnrolled ? (
-                <div className="mt-6 rounded-2xl bg-emerald-50 p-4 border border-emerald-200 text-center">
-                  <p className="text-xs font-bold text-emerald-800 flex items-center justify-center gap-1.5">
-                    <CheckCircle2 size={16} className="text-emerald-600" /> You are enrolled in this course!
+                <div className="mt-6 rounded-[4px] bg-accent/10 p-4 border border-accent/30 text-center">
+                  <p className="text-xs font-mono font-bold text-accent flex items-center justify-center gap-1.5">
+                    <CheckCircle2 size={16} className="text-accent" /> You are enrolled in this course!
                   </p>
-                  <p className="mt-1 text-[11px] text-emerald-700">
-                    Scroll down to access full video lessons and interactive content.
+                  <p className="mt-1 text-[11px] text-ink-muted">
+                    Access full video lessons and interactive content below.
                   </p>
                 </div>
               ) : (
                 <button
                   type="button"
                   onClick={handleEnroll}
-                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#520051] px-6 py-3.5 text-sm font-bold text-white shadow-md hover:bg-[#920090] transition"
+                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-[4px] bg-primary px-6 py-3.5 text-sm font-semibold text-primary-fg hover:opacity-90 transition shadow-sm"
                 >
                   <Zap size={18} /> Enroll Now & Start Learning
                 </button>
@@ -294,38 +295,38 @@ export default function CourseDetailPage() {
             {/* Player Main Area */}
             <div className="lg:col-span-2 space-y-6">
               {/* Progress Header */}
-              <div className="rounded-2xl border border-[#eee5ee] bg-white p-5 shadow-xs">
+              <div className="rounded-[4px] border border-border bg-surface p-5 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-xs font-bold text-[#920090] uppercase tracking-wider">
+                    <span className="text-xs font-mono font-semibold text-primary uppercase tracking-wider">
                       Your Course Progress
                     </span>
-                    <h3 className="text-lg font-extrabold text-[#520051]">
+                    <h3 className="font-serif text-lg font-medium text-ink">
                       {progressPercentage}% Completed
                     </h3>
                   </div>
 
-                  <span className="inline-flex items-center gap-1 rounded-xl bg-[#faf5fa] px-3.5 py-2 text-xs font-bold text-[#520051] border border-[#eee5ee]">
-                    <Sparkles size={14} className="text-amber-500" /> +{completedLessonIds.size * 25} XP Earned
+                  <span className="inline-flex items-center gap-1 rounded-[4px] bg-surface-2 px-3.5 py-1.5 text-xs font-mono font-semibold text-primary border border-border">
+                    <Sparkles size={14} className="text-primary" /> +{completedLessonIds.size * 25} XP Earned
                   </span>
                 </div>
 
                 {/* Progress Bar */}
-                <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+                <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-border">
                   <div
-                    className="h-full bg-gradient-to-r from-[#520051] to-[#D400D1] transition-all duration-500"
+                    className="h-full bg-primary transition-all duration-500"
                     style={{ width: `${progressPercentage}%` }}
                   />
                 </div>
 
                 {progressPercentage === 100 && (
-                  <div className="mt-4 flex items-center justify-between rounded-xl bg-amber-500/10 p-3.5 border border-amber-500/30 text-xs font-bold text-amber-900">
+                  <div className="mt-4 flex items-center justify-between rounded-[4px] bg-primary/15 p-3.5 border border-primary/30 text-xs font-mono text-ink">
                     <span className="flex items-center gap-2">
-                      <Award size={18} className="text-amber-600" /> Course Completed! Claim your certificate.
+                      <Award size={18} className="text-primary" /> Course Completed! Claim your certificate.
                     </span>
                     <Link
                       href="/certificates"
-                      className="rounded-lg bg-[#520051] px-3 py-1.5 text-xs text-white hover:bg-[#920090]"
+                      className="rounded-[4px] bg-primary px-3 py-1.5 text-xs font-semibold text-primary-fg hover:opacity-90"
                     >
                       View Certificate
                     </Link>
@@ -335,13 +336,13 @@ export default function CourseDetailPage() {
 
               {/* Lesson Content Viewer */}
               {currentLesson ? (
-                <div className="rounded-3xl border border-[#eee5ee] bg-white p-6 shadow-xs">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div className="rounded-[4px] border border-border bg-surface p-6 shadow-sm">
+                  <div className="flex items-center justify-between border-b border-border pb-4">
                     <div>
-                      <span className="text-xs font-semibold text-slate-400">
+                      <span className="text-xs font-mono text-ink-muted">
                         {currentModule?.title}
                       </span>
-                      <h2 className="text-xl font-bold text-[#520051] mt-0.5">
+                      <h2 className="font-serif text-xl font-medium text-ink mt-0.5">
                         {currentLesson.title}
                       </h2>
                     </div>
@@ -349,10 +350,10 @@ export default function CourseDetailPage() {
                     <button
                       type="button"
                       onClick={() => handleToggleLessonComplete(currentLesson.id)}
-                      className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition ${
+                      className={`inline-flex items-center gap-2 rounded-[4px] px-4 py-2 text-xs font-semibold transition ${
                         completedLessonIds.has(currentLesson.id)
-                          ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
-                          : "bg-[#520051] text-white hover:bg-[#920090]"
+                          ? "bg-accent/20 text-accent border border-accent/40"
+                          : "bg-primary text-primary-fg hover:opacity-90"
                       }`}
                     >
                       <CheckCircle2 size={16} />
@@ -364,15 +365,15 @@ export default function CourseDetailPage() {
                   <div className="mt-6">
                     {currentLesson.type === "video" && (
                       <div>
-                        <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-slate-900 flex flex-col items-center justify-center text-white shadow-inner">
-                          <PlayCircle size={64} className="text-pink-400 animate-pulse hover:scale-110 transition cursor-pointer" />
-                          <p className="mt-4 text-sm font-bold">Interactive Video Player</p>
-                          <p className="text-xs text-slate-400">Lesson Duration: {currentLesson.durationMin} minutes</p>
+                        <div className="relative aspect-video w-full overflow-hidden rounded-[4px] bg-bg border border-border flex flex-col items-center justify-center text-ink">
+                          <PlayCircle size={64} className="text-primary hover:scale-110 transition cursor-pointer" />
+                          <p className="mt-4 font-serif text-base font-medium">Interactive Video Player</p>
+                          <p className="text-xs font-mono text-ink-muted">Lesson Duration: {currentLesson.durationMin} minutes</p>
                         </div>
 
-                        <div className="mt-6 rounded-2xl bg-[#faf5fa] p-5 border border-[#eee5ee]">
-                          <h4 className="text-xs font-bold text-[#520051] uppercase tracking-wider">Lesson Notes & Key Takeaways</h4>
-                          <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                        <div className="mt-6 rounded-[4px] bg-surface-2 p-5 border border-border">
+                          <h4 className="text-xs font-mono font-semibold text-primary uppercase tracking-wider">Lesson Notes & Key Takeaways</h4>
+                          <p className="mt-2 text-xs leading-relaxed text-ink-muted">
                             In this video lesson, you will master the foundational mechanics of {currentLesson.title}. Follow along with the instructor, code along in your environment, and test your understanding using the quiz.
                           </p>
                         </div>
@@ -380,15 +381,15 @@ export default function CourseDetailPage() {
                     )}
 
                     {currentLesson.type === "reading" && (
-                      <div className="space-y-4 text-xs text-slate-700 leading-relaxed">
-                        <div className="rounded-2xl bg-purple-50/50 p-5 border border-purple-100">
-                          <h4 className="text-sm font-bold text-[#520051]">Article Guide: {currentLesson.title}</h4>
-                          <p className="mt-2">
+                      <div className="space-y-4 text-xs text-ink-muted leading-relaxed">
+                        <div className="rounded-[4px] bg-surface-2 p-5 border border-border">
+                          <h4 className="font-serif text-base font-medium text-ink">Article Guide: {currentLesson.title}</h4>
+                          <p className="mt-2 text-ink-muted">
                             Welcome to this reading module. Read through the architectural overview and code examples carefully before marking the lesson as finished.
                           </p>
                         </div>
 
-                        <div className="rounded-2xl bg-slate-900 p-4 font-mono text-emerald-400 text-[11px] overflow-x-auto">
+                        <div className="rounded-[4px] bg-bg p-4 font-mono text-accent text-[11px] overflow-x-auto border border-border">
                           <code>{`// Core Implementation Example\nfunction initializeLearningSystem() {\n  console.log("UNIGAP Course Engine Loaded Successfully");\n  return { status: "ACTIVE", progress: 100 };\n}`}</code>
                         </div>
                       </div>
@@ -396,11 +397,11 @@ export default function CourseDetailPage() {
 
                     {currentLesson.type === "quiz" && (
                       <div className="space-y-4">
-                        <div className="rounded-2xl bg-[#faf5fa] p-6 border border-[#eee5ee]">
-                          <div className="flex items-center gap-2 text-xs font-bold text-[#920090]">
+                        <div className="rounded-[4px] bg-surface-2 p-6 border border-border">
+                          <div className="flex items-center gap-2 text-xs font-mono text-primary">
                             <HelpCircle size={16} /> Knowledge Check Assessment
                           </div>
-                          <h3 className="mt-2 text-sm font-bold text-[#520051]">
+                          <h3 className="mt-2 font-serif text-base font-medium text-ink">
                             What is the primary architectural concept introduced in &quot;{currentLesson.title}&quot;?
                           </h3>
 
@@ -415,10 +416,10 @@ export default function CourseDetailPage() {
                                 key={idx}
                                 type="button"
                                 onClick={() => setQuizAnswer(idx)}
-                                className={`w-full text-left rounded-xl p-3.5 text-xs font-medium transition border ${
+                                className={`w-full text-left rounded-[4px] p-3.5 text-xs transition border ${
                                   quizAnswer === idx
-                                    ? "border-[#520051] bg-[#f7ddf7] font-bold text-[#520051]"
-                                    : "border-slate-200 bg-white hover:border-[#920090]/40"
+                                    ? "border-primary bg-primary/15 font-semibold text-primary"
+                                    : "border-border bg-surface text-ink-muted hover:border-border-hover"
                                 }`}
                               >
                                 {String.fromCharCode(65 + idx)}. {option}
@@ -431,13 +432,13 @@ export default function CourseDetailPage() {
                               type="button"
                               onClick={() => setQuizSubmitted(true)}
                               disabled={quizAnswer === null}
-                              className="rounded-xl bg-[#520051] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#920090] disabled:opacity-50"
+                              className="rounded-[4px] bg-primary px-5 py-2.5 text-xs font-semibold text-primary-fg hover:opacity-90 disabled:opacity-50"
                             >
                               Submit Answer
                             </button>
 
                             {quizSubmitted && (
-                              <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
+                              <span className="text-xs font-mono font-semibold text-accent flex items-center gap-1">
                                 <CheckCircle2 size={16} /> Correct! +25 XP Awarded
                               </span>
                             )}
@@ -448,7 +449,7 @@ export default function CourseDetailPage() {
                   </div>
 
                   {/* Navigation controls */}
-                  <div className="mt-8 flex items-center justify-between border-t border-slate-100 pt-5">
+                  <div className="mt-8 flex items-center justify-between border-t border-border pt-5">
                     <button
                       type="button"
                       onClick={() => {
@@ -460,7 +461,7 @@ export default function CourseDetailPage() {
                         }
                       }}
                       disabled={activeModuleIndex === 0 && activeLessonIndex === 0}
-                      className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-semibold text-slate-600 disabled:opacity-40"
+                      className="rounded-[4px] border border-border bg-surface-2 px-4 py-2.5 text-xs font-mono text-ink-muted disabled:opacity-40 hover:bg-surface"
                     >
                       ← Previous Lesson
                     </button>
@@ -468,35 +469,35 @@ export default function CourseDetailPage() {
                     <button
                       type="button"
                       onClick={handleNextLesson}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-[#520051] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#920090]"
+                      className="inline-flex items-center gap-1.5 rounded-[4px] bg-primary px-5 py-2.5 text-xs font-semibold text-primary-fg hover:opacity-90"
                     >
                       Next Lesson <ChevronRight size={14} />
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="rounded-3xl border border-[#eee5ee] bg-white p-12 text-center shadow-xs">
-                  <p className="text-sm text-slate-500">Select a lesson from the curriculum sidebar to begin.</p>
+                <div className="rounded-[4px] border border-border bg-surface p-12 text-center">
+                  <p className="text-xs font-mono text-ink-muted">Select a lesson from the curriculum sidebar to begin.</p>
                 </div>
               )}
             </div>
 
             {/* Curriculum Sidebar */}
             <div className="space-y-4">
-              <div className="rounded-3xl border border-[#eee5ee] bg-white p-6 shadow-xs">
-                <h3 className="text-sm font-bold text-[#520051] uppercase tracking-wider border-b border-slate-100 pb-3">
+              <div className="rounded-[4px] border border-border bg-surface p-6 shadow-sm">
+                <h3 className="text-xs font-mono font-semibold text-primary uppercase tracking-wider border-b border-border pb-3">
                   Course Modules ({course.curriculum?.length || 0})
                 </h3>
 
                 <div className="mt-4 space-y-4">
                   {course.curriculum?.map((mod, mi) => (
-                    <div key={mod.id || mi} className="rounded-2xl border border-slate-100 bg-[#faf5fa] overflow-hidden">
-                      <div className="p-3 bg-[#f5eef5] text-xs font-bold text-[#520051] flex items-center justify-between">
+                    <div key={mod.id || mi} className="rounded-[4px] border border-border bg-surface-2 overflow-hidden">
+                      <div className="p-3 bg-surface-2 text-xs font-serif font-medium text-ink flex items-center justify-between border-b border-border">
                         <span>Module {mi + 1}: {mod.title}</span>
-                        <span className="text-[10px] text-slate-500">{mod.lessons?.length || 0} lessons</span>
+                        <span className="text-[10px] font-mono text-ink-muted">{mod.lessons?.length || 0} lessons</span>
                       </div>
 
-                      <div className="divide-y divide-slate-100">
+                      <div className="divide-y divide-border">
                         {mod.lessons?.map((les, li) => {
                           const isActive = mi === activeModuleIndex && li === activeLessonIndex;
                           const isDone = completedLessonIds.has(les.id);
@@ -509,22 +510,22 @@ export default function CourseDetailPage() {
                                 setActiveLessonIndex(li);
                               }}
                               className={`w-full flex items-center justify-between p-3 text-left transition text-xs ${
-                                isActive ? "bg-[#f0d8f0] font-bold text-[#520051]" : "hover:bg-white"
+                                isActive ? "bg-primary/15 font-semibold text-primary" : "hover:bg-surface text-ink-muted"
                               }`}
                             >
                               <div className="flex items-center gap-2 min-w-0">
                                 {isDone ? (
-                                  <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
+                                  <CheckCircle2 size={14} className="text-accent shrink-0" />
                                 ) : les.type === "video" ? (
-                                  <PlayCircle size={14} className="text-[#920090] shrink-0" />
+                                  <PlayCircle size={14} className="text-primary shrink-0" />
                                 ) : les.type === "quiz" ? (
-                                  <HelpCircle size={14} className="text-amber-600 shrink-0" />
+                                  <HelpCircle size={14} className="text-primary shrink-0" />
                                 ) : (
-                                  <FileText size={14} className="text-blue-600 shrink-0" />
+                                  <FileText size={14} className="text-accent shrink-0" />
                                 )}
                                 <span className="truncate">{les.title}</span>
                               </div>
-                              <span className="text-[10px] text-slate-400 shrink-0 ml-2">{les.durationMin}m</span>
+                              <span className="text-[10px] font-mono text-ink-muted shrink-0 ml-2">{les.durationMin}m</span>
                             </button>
                           );
                         })}
@@ -536,40 +537,47 @@ export default function CourseDetailPage() {
             </div>
           </div>
         ) : (
-          /* UNENROLLED COURSE PREVIEW */
+          /* UNENROLLED COURSE PREVIEW — VISUALLY REFLECTED LOCKED CONTENT */
           <div className="grid gap-8 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-8">
               {/* Learning Outcomes */}
-              <div className="rounded-3xl border border-[#eee5ee] bg-white p-6 shadow-xs">
-                <h2 className="text-lg font-bold text-[#520051]">What You Will Learn</h2>
+              <div className="rounded-[4px] border border-border bg-surface p-6 shadow-sm">
+                <h2 className="font-serif text-xl font-medium text-ink">What You Will Learn</h2>
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   {course.outcomes?.map((outcome, idx) => (
-                    <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-700">
-                      <Check size={16} className="text-emerald-600 shrink-0 mt-0.5" />
+                    <div key={idx} className="flex items-start gap-2.5 text-xs text-ink-muted">
+                      <Check size={16} className="text-accent shrink-0 mt-0.5" />
                       <span>{outcome}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Syllabus Preview */}
-              <div className="rounded-3xl border border-[#eee5ee] bg-white p-6 shadow-xs">
-                <h2 className="text-lg font-bold text-[#520051]">Course Syllabus</h2>
-                <p className="text-xs text-slate-500 mt-0.5">Enroll in this course to unlock all modules and video lessons.</p>
+              {/* Syllabus Preview with Visually Reflected Locked Overlay */}
+              <div className="rounded-[4px] border border-border bg-surface p-6 shadow-sm">
+                <div className="flex items-center justify-between border-b border-border pb-3">
+                  <div>
+                    <h2 className="font-serif text-xl font-medium text-ink">Course Syllabus</h2>
+                    <p className="text-xs font-mono text-ink-muted mt-0.5">Enroll to unlock all video lessons and interactive content.</p>
+                  </div>
+                  <Badge variant="brass">
+                    <Lock size={12} /> Pay to Unlock
+                  </Badge>
+                </div>
 
                 <div className="mt-5 space-y-3">
                   {course.curriculum?.map((mod, mi) => (
-                    <div key={mod.id || mi} className="rounded-2xl border border-slate-200 bg-[#faf5fa] p-4">
-                      <h3 className="text-xs font-bold text-[#520051]">
+                    <div key={mod.id || mi} className="rounded-[4px] border border-border bg-surface-2 p-4">
+                      <h3 className="font-serif text-sm font-medium text-ink">
                         Module {mi + 1}: {mod.title}
                       </h3>
                       <div className="mt-2.5 space-y-1.5">
                         {mod.lessons?.map((les, li) => (
-                          <div key={les.id || li} className="flex items-center justify-between text-xs text-slate-600 py-1">
+                          <div key={les.id || li} className="flex items-center justify-between text-xs text-ink-muted py-1.5 border-b border-border/50 last:border-0">
                             <span className="flex items-center gap-2">
-                              <Lock size={13} className="text-slate-400" /> {les.title}
+                              <Lock size={13} className="text-ink-muted" /> {les.title}
                             </span>
-                            <span className="text-[10px] text-slate-400">{les.durationMin} min</span>
+                            <span className="font-mono text-[10px] text-ink-muted">{les.durationMin} min</span>
                           </div>
                         ))}
                       </div>
@@ -581,16 +589,16 @@ export default function CourseDetailPage() {
 
             {/* Sidebar CTA */}
             <div>
-              <div className="rounded-3xl border border-[#eee5ee] bg-white p-6 shadow-xs text-center sticky top-6">
-                <h3 className="text-base font-bold text-[#520051]">Unlock Full Course Access</h3>
-                <p className="mt-1 text-xs text-slate-500">
+              <div className="rounded-[4px] border border-border bg-surface p-6 shadow-sm text-center sticky top-6">
+                <h3 className="font-serif text-lg font-medium text-ink">Unlock Full Course Access</h3>
+                <p className="mt-2 text-xs text-ink-muted">
                   Enroll today to access all video lessons, code exercises, and claim your completion certificate.
                 </p>
 
                 <button
                   type="button"
                   onClick={handleEnroll}
-                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#520051] px-6 py-3.5 text-sm font-bold text-white shadow-md hover:bg-[#920090] transition"
+                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-[4px] bg-primary px-6 py-3.5 text-sm font-semibold text-primary-fg hover:opacity-90 transition shadow-sm"
                 >
                   <Zap size={18} /> Enroll Now
                 </button>
@@ -604,3 +612,5 @@ export default function CourseDetailPage() {
     </div>
   );
 }
+
+

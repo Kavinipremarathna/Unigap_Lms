@@ -1,9 +1,37 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans, Outfit, Lora, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { SiteContentProvider } from "@/lib/context/site-content-context";
+import { ThemeProvider } from "@/lib/context/theme-context";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+});
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-heading",
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+});
+
+const lora = Lora({
+  subsets: ["latin"],
+  variable: "--font-serif",
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  weight: ["400", "500", "600"],
+  display: "swap",
+});
+
 
 export const metadata: Metadata = {
   title: {
@@ -22,10 +50,20 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning className={inter.variable}>
-      <body>
-        <SiteContentProvider>{children}</SiteContentProvider>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${plusJakartaSans.variable} ${outfit.variable} ${lora.variable} ${jetbrainsMono.variable}`}
+    >
+      <body className="bg-bg text-ink min-h-screen antialiased">
+        <ThemeProvider>
+          <SiteContentProvider>{children}</SiteContentProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
 }
+
+
+
+

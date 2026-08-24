@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
@@ -66,18 +67,18 @@ export function MobileHeader() {
   return (
     <>
       {/* Sticky Mobile Top Navigation Bar */}
-      <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-border bg-surface/95 px-4 backdrop-blur-md lg:hidden">
+      <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-border bg-bg/95 px-4 backdrop-blur-md lg:hidden transition-colors">
         {/* Left: 3-line hamburger menu button + UNIGAP logo */}
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => setIsOpen(true)}
-            className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-surface-2 text-ink transition-colors hover:bg-border/40 focus:outline-none focus:ring-2 focus:ring-primary/20 active:scale-95"
+            className="flex h-10 w-10 items-center justify-center rounded-[4px] border border-border bg-surface text-ink transition-colors hover:bg-surface-2 active:scale-95"
             aria-label="Open navigation menu"
             aria-expanded={isOpen}
             id="mobile-menu-trigger"
           >
-            <Menu size={22} className="stroke-[2.2]" />
+            <Menu size={22} className="stroke-[2]" />
           </button>
 
           <Link href="/dashboard" className="flex items-center" aria-label="UNIGAP Dashboard">
@@ -85,22 +86,24 @@ export function MobileHeader() {
           </Link>
         </div>
 
-        {/* Right: Notification Bell + User Avatar Quick Link */}
+        {/* Right: Theme Toggle + Notification Bell + User Avatar */}
         <div className="flex items-center gap-2">
+          <ThemeToggle />
+
           <Link
             href="/notifications"
             className="relative flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface text-ink transition-colors hover:bg-surface-2"
             aria-label="Notifications"
           >
             <Bell size={17} />
-            <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-error text-[10px] font-bold text-white shadow-sm">
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-mono font-bold text-primary-fg">
               3
             </span>
           </Link>
 
           <Link
             href="/profile"
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#520051] to-[#d400d1] text-xs font-bold text-white shadow-sm ring-2 ring-primary/20 transition-transform active:scale-95"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-xs font-mono font-bold text-primary-fg ring-2 ring-primary/20 transition-transform active:scale-95"
             aria-label="View profile"
           >
             JD
@@ -113,7 +116,7 @@ export function MobileHeader() {
         <div className="fixed inset-0 z-50 lg:hidden">
           {/* Overlay backdrop */}
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 animate-fade-in"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-300 animate-fade-in"
             onClick={() => setIsOpen(false)}
             aria-hidden="true"
           />
@@ -128,7 +131,7 @@ export function MobileHeader() {
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className="flex h-9 w-9 items-center justify-center rounded-[4px] text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink"
                 aria-label="Close navigation menu"
                 id="mobile-menu-close"
               >
@@ -137,24 +140,24 @@ export function MobileHeader() {
             </div>
 
             {/* User Profile Mini Banner */}
-            <div className="border-b border-border bg-surface-2/60 p-4">
+            <div className="border-b border-border bg-surface-2 p-4">
               <Link
                 href="/profile"
                 onClick={() => setIsOpen(false)}
-                className="flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-surface"
+                className="flex items-center gap-3 rounded-[4px] p-2 transition-colors hover:bg-surface"
               >
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#520051] to-[#d400d1] text-sm font-bold text-white shadow-sm">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-mono font-bold text-primary-fg">
                   JD
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-ink">Jordan Diaz</p>
-                  <p className="truncate text-xs text-ink-muted">Level 8 · Pro plan</p>
-                  <div className="mt-1.5 flex items-center gap-2 text-[11px]">
-                    <span className="inline-flex items-center gap-0.5 font-bold text-streak">
-                      <Flame size={13} className="fill-streak" /> 7d streak
+                  <p className="truncate text-xs font-mono text-ink-muted">Level 8 · Pro plan</p>
+                  <div className="mt-1.5 flex items-center gap-2 text-[11px] font-mono">
+                    <span className="inline-flex items-center gap-0.5 font-bold text-primary">
+                      <Flame size={13} className="fill-primary" /> 7d streak
                     </span>
-                    <span className="inline-flex items-center gap-0.5 font-bold text-xp">
-                      <Zap size={13} className="fill-xp" /> 1,240 XP
+                    <span className="inline-flex items-center gap-0.5 font-bold text-accent">
+                      <Zap size={13} className="fill-accent" /> 1,240 XP
                     </span>
                   </div>
                 </div>
@@ -163,7 +166,7 @@ export function MobileHeader() {
 
             {/* Navigation links list */}
             <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Mobile menu navigation">
-              <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+              <p className="mb-2 px-3 text-[11px] font-mono font-bold uppercase tracking-wider text-ink-muted">
                 Menu
               </p>
               <div className="space-y-1">
@@ -180,9 +183,9 @@ export function MobileHeader() {
                       href={item.href}
                       onClick={() => setIsOpen(false)}
                       className={cn(
-                        "flex items-center justify-between rounded-xl px-3.5 py-3 text-sm font-medium transition-all",
+                        "flex items-center justify-between rounded-[4px] px-3.5 py-3 text-sm font-medium transition-all",
                         active
-                          ? "bg-primary-50 text-primary font-semibold shadow-sm"
+                          ? "bg-primary/15 text-primary border border-primary/30"
                           : "text-ink-muted hover:bg-surface-2 hover:text-ink"
                       )}
                     >
@@ -194,7 +197,7 @@ export function MobileHeader() {
                         <span>{item.label}</span>
                       </div>
                       {item.badge && (
-                        <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary/10 px-1.5 text-xs font-semibold text-primary">
+                        <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary/15 px-1.5 text-xs font-mono font-semibold text-primary border border-primary/30">
                           {item.badge}
                         </span>
                       )}
@@ -210,7 +213,7 @@ export function MobileHeader() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-full flex items-center justify-center gap-2 text-ink-muted hover:text-error hover:border-error/40"
+                  className="w-full flex items-center justify-center gap-2 text-ink-muted hover:text-red-600 dark:hover:text-red-400 hover:border-red-500/40"
                 >
                   <LogOut size={16} />
                   <span>Log out</span>
@@ -223,3 +226,5 @@ export function MobileHeader() {
     </>
   );
 }
+
+

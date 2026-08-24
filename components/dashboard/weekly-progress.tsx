@@ -17,10 +17,10 @@ export function WeeklyProgress() {
   const max = Math.max(...week.map((d) => d.min));
 
   return (
-    <Card>
+    <Card className="rounded-[4px] border border-border bg-surface">
       <CardContent>
         <CardTitle>Weekly Progress</CardTitle>
-        <p className="mt-1 text-xs text-ink-muted">200 minutes learned this week</p>
+        <p className="mt-1 text-xs font-mono text-ink-muted">200 minutes learned this week</p>
         <div className="mt-6 flex items-end justify-between gap-2 h-32">
           {week.map((d, i) => (
             <div key={d.day} className="flex flex-1 flex-col items-center gap-2">
@@ -28,10 +28,10 @@ export function WeeklyProgress() {
                 initial={{ height: 0 }}
                 animate={{ height: `${(d.min / max) * 100}%` }}
                 transition={{ duration: 0.6, delay: i * 0.05, ease: [0.22, 1, 0.36, 1] }}
-                className="w-full rounded-md bg-gradient-to-t from-primary to-accent"
+                className="w-full rounded-[2px] bg-primary hover:opacity-90 transition-colors"
                 style={{ minHeight: 4 }}
               />
-              <span className="text-[11px] font-medium text-ink-muted">{d.day}</span>
+              <span className="text-[11px] font-mono font-medium text-ink-muted">{d.day}</span>
             </div>
           ))}
         </div>
@@ -39,3 +39,5 @@ export function WeeklyProgress() {
     </Card>
   );
 }
+
+

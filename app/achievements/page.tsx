@@ -19,7 +19,9 @@ import {
   Trophy,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
+import { SubpageHeroHeader } from "@/components/ui/subpage-hero-header";
 import { achievements as initialAchievements } from "@/lib/mock/achievements";
+
 import { Achievement } from "@/lib/types";
 import { getSafeIcon } from "@/components/ui/safe-icon";
 
@@ -67,71 +69,63 @@ export default function LearnerAchievementsPage() {
 
   return (
     <AppShell>
-      <main className="container mx-auto px-4 py-8 max-w-7xl">
+      <main className="container-app py-8">
         {/* Header Hero */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#520051] via-[#740072] to-[#d400d1] p-8 text-white shadow-xl">
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold backdrop-blur-md">
-                <Trophy size={14} className="text-yellow-300" /> Learner Gamification
-              </span>
-              <h1 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
-                Your Achievements & Badges
-              </h1>
-              <p className="mt-2 text-sm text-purple-100 max-w-xl">
-                Unlock badges as you complete courses, maintain learning streaks, and master new skills across UNIGAP.
-              </p>
-            </div>
-
-            {/* Quick Stat Pill */}
-            <div className="flex items-center gap-4 rounded-2xl bg-white/10 p-4 backdrop-blur-md border border-white/15">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-400 text-[#520051] shadow-md">
-                <Zap size={24} className="fill-current" />
+        <SubpageHeroHeader
+          icon={Trophy}
+          badgeText="Learner Gamification"
+          title="Your Achievements & Badges"
+          description="Unlock badges as you complete courses, maintain learning streaks, and master new skills across UNIGAP."
+          rightContent={
+            <div className="flex items-center gap-3.5 rounded-[4px] border border-border bg-surface p-4 shadow-sm">
+              <div className="flex h-11 w-11 items-center justify-center rounded-[4px] border border-primary/30 bg-primary/10 text-primary">
+                <Zap size={22} />
               </div>
               <div>
-                <p className="text-xs uppercase tracking-wider text-purple-200 font-medium">Earned Rewards</p>
-                <p className="text-2xl font-black">{totalXP} XP</p>
+                <p className="font-mono text-xs uppercase tracking-wider text-ink-muted">Earned Rewards</p>
+                <p className="font-mono text-2xl font-bold text-ink">{totalXP} XP</p>
               </div>
             </div>
-          </div>
-        </div>
+          }
+        />
 
         {/* Stats Grid */}
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+          <div className="rounded-[4px] border border-border bg-surface p-5 shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500">Total Badges</span>
-              <Award className="text-[#920090]" size={20} />
+              <span className="font-mono text-xs font-semibold text-ink-muted uppercase">Total Badges</span>
+              <Award className="text-primary" size={20} />
             </div>
-            <p className="mt-2 text-3xl font-extrabold text-[#520051]">{achievements.length}</p>
+            <p className="mt-2 font-mono text-3xl font-bold text-ink">{achievements.length}</p>
           </div>
 
-          <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+          <div className="rounded-[4px] border border-border bg-surface p-5 shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500">Unlocked</span>
-              <CheckCircle2 className="text-emerald-500" size={20} />
+              <span className="font-mono text-xs font-semibold text-ink-muted uppercase">Unlocked</span>
+              <CheckCircle2 className="text-accent" size={20} />
             </div>
-            <p className="mt-2 text-3xl font-extrabold text-emerald-600">{unlockedCount}</p>
+            <p className="mt-2 font-mono text-3xl font-bold text-accent">{unlockedCount}</p>
           </div>
 
-          <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+          <div className="rounded-[4px] border border-border bg-surface p-5 shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500">Locked</span>
-              <Lock className="text-amber-500" size={20} />
+              <span className="font-mono text-xs font-semibold text-ink-muted uppercase">Locked</span>
+              <Lock className="text-primary" size={20} />
             </div>
-            <p className="mt-2 text-3xl font-extrabold text-amber-600">{achievements.length - unlockedCount}</p>
+            <p className="mt-2 font-mono text-3xl font-bold text-primary">{achievements.length - unlockedCount}</p>
           </div>
 
-          <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+          <div className="rounded-[4px] border border-border bg-surface p-5 shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500">Completion</span>
-              <Flame className="text-orange-500" size={20} />
+              <span className="font-mono text-xs font-semibold text-ink-muted uppercase">Completion</span>
+              <Flame className="text-accent" size={20} />
             </div>
-            <p className="mt-2 text-3xl font-extrabold text-[#520051]">
+            <p className="mt-2 font-mono text-3xl font-bold text-ink">
               {Math.round((unlockedCount / (achievements.length || 1)) * 100)}%
             </p>
           </div>
         </div>
+
 
         {/* Filters & Search */}
         <div className="mt-8 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">

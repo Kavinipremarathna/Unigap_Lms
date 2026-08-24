@@ -35,16 +35,16 @@ export function Faq() {
       {faqs.map((item, i) => {
         const open = openIndex === i;
         return (
-          <div key={item.q} className="py-4">
+          <div key={item.q} className="py-4.5">
             <button
-              className="flex w-full items-center justify-between gap-4 text-left"
+              className="flex w-full items-center justify-between gap-4 text-left hover:text-primary transition-colors"
               onClick={() => setOpenIndex(open ? null : i)}
               aria-expanded={open}
             >
-              <span className="text-sm font-semibold text-ink">{item.q}</span>
+              <span className="font-serif text-base font-medium text-ink">{item.q}</span>
               <ChevronDown
                 size={18}
-                className={cn("shrink-0 text-ink-muted transition-transform", open && "rotate-180")}
+                className={cn("shrink-0 text-primary transition-transform duration-200", open && "rotate-180")}
               />
             </button>
             {open && <p className="mt-3 text-sm leading-relaxed text-ink-muted">{item.a}</p>}
@@ -54,3 +54,5 @@ export function Faq() {
     </div>
   );
 }
+
+

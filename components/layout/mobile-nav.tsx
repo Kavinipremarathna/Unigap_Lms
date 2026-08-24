@@ -38,7 +38,7 @@ export function MobileNav() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 flex border-t border-border bg-surface/95 backdrop-blur-md lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 flex border-t border-border bg-bg/95 backdrop-blur-md lg:hidden transition-colors"
       aria-label="Bottom navigation"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
@@ -54,11 +54,11 @@ export function MobileNav() {
             key={item.label}
             href={item.href}
             className={cn(
-              "flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-colors",
+              "flex flex-1 flex-col items-center gap-1 py-2 text-[11px] font-mono font-medium transition-colors",
               active ? "text-primary font-semibold" : "text-ink-muted hover:text-ink"
             )}
           >
-            <Icon size={20} className={active ? "text-primary" : "text-ink-muted"} />
+            <Icon size={19} className={active ? "text-primary" : "text-ink-muted"} />
             <span>{item.label}</span>
           </Link>
         );
@@ -66,3 +66,5 @@ export function MobileNav() {
     </nav>
   );
 }
+
+

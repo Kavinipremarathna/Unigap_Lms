@@ -23,12 +23,22 @@ export function isUserAuthenticated(): boolean {
 }
 
 export async function loginWithNestJS(email: string, pass: string): Promise<{ token: string; user: AuthUser }> {
-  const response = await fetch(`${NESTJS_API_URL}/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email: email.trim(), password: pass }),
-    credentials: "include",
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${NESTJS_API_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim(), password: pass }),
+      credentials: "include",
+    });
+  } catch {
+    // Fallback to Next.js internal API route if NestJS server is not reachable
+    response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim(), password: pass }),
+    });
+  }
 
   const data = await response.json();
 
@@ -37,16 +47,16 @@ export async function loginWithNestJS(email: string, pass: string): Promise<{ to
   }
 
   const user: AuthUser = {
-    id: data.user.id,
-    email: data.user.email,
-    name: data.user.name,
-    role: data.user.role,
+    id: data.user?.id,
+    email: data.user?.email || email,
+    name: data.user?.name || email.split("@")[0],
+    role: data.user?.role,
   };
 
   if (typeof window !== "undefined") {
     try {
       localStorage.setItem("unigap_auth_logged_in", "true");
-      localStorage.setItem("unigap_auth_token", data.token);
+      localStorage.setItem("unigap_auth_token", data.token || "");
       localStorage.setItem("unigap_auth_user", JSON.stringify(user));
       window.dispatchEvent(new Event("unigap_auth_changed"));
     } catch {
@@ -54,16 +64,26 @@ export async function loginWithNestJS(email: string, pass: string): Promise<{ to
     }
   }
 
-  return { token: data.token, user };
+  return { token: data.token || "", user };
 }
 
 export async function registerWithNestJS(name: string, email: string, pass: string): Promise<{ token: string; user: AuthUser }> {
-  const response = await fetch(`${NESTJS_API_URL}/auth/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name: name.trim(), email: email.trim(), password: pass }),
-    credentials: "include",
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${NESTJS_API_URL}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: name.trim(), email: email.trim(), password: pass }),
+      credentials: "include",
+    });
+  } catch {
+    // Fallback to Next.js internal API route if NestJS server is not reachable
+    response = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: name.trim(), email: email.trim(), password: pass }),
+    });
+  }
 
   const data = await response.json();
 
@@ -72,16 +92,16 @@ export async function registerWithNestJS(name: string, email: string, pass: stri
   }
 
   const user: AuthUser = {
-    id: data.user.id,
-    email: data.user.email,
-    name: data.user.name,
-    role: data.user.role,
+    id: data.user?.id,
+    email: data.user?.email || email,
+    name: data.user?.name || name,
+    role: data.user?.role,
   };
 
   if (typeof window !== "undefined") {
     try {
       localStorage.setItem("unigap_auth_logged_in", "true");
-      localStorage.setItem("unigap_auth_token", data.token);
+      localStorage.setItem("unigap_auth_token", data.token || "");
       localStorage.setItem("unigap_auth_user", JSON.stringify(user));
       window.dispatchEvent(new Event("unigap_auth_changed"));
     } catch {
@@ -89,7 +109,52 @@ export async function registerWithNestJS(name: string, email: string, pass: stri
     }
   }
 
-  return { token: data.token, user };
+  return { token: data.token || "", user };
+}
+
+export async function updateUserProfileInDB(
+  currentEmail: string,
+  name: string,
+  newEmail: string
+): Promise<AuthUser> {
+  let response: Response;
+  try {
+    response = await fetch("/api/user/profile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ currentEmail, name, email: newEmail }),
+    });
+  } catch {
+    throw new Error("Unable to connect to database server.");
+  }
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Failed to save profile changes to database.");
+  }
+
+  const updatedUser: AuthUser = {
+    id: data.user?.id,
+    email: data.user?.email || newEmail,
+    name: data.user?.name || name,
+    role: data.user?.role,
+  };
+
+  if (typeof window !== "undefined") {
+    try {
+      if (data.token) {
+        localStorage.setItem("unigap_auth_token", data.token);
+      }
+      localStorage.setItem("unigap_auth_user", JSON.stringify(updatedUser));
+      window.dispatchEvent(new Event("unigap_auth_changed"));
+    } catch {
+      // fallback
+    }
+  }
+
+
+  return updatedUser;
 }
 
 export function setAuthenticatedUser(email: string, name?: string): AuthUser {
@@ -108,6 +173,7 @@ export function setAuthenticatedUser(email: string, name?: string): AuthUser {
   }
   return user;
 }
+
 
 export function logoutUser(): void {
   if (typeof window !== "undefined") {

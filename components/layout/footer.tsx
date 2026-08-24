@@ -30,7 +30,7 @@ const columns = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-border bg-surface">
+    <footer className="border-t border-border bg-surface text-ink transition-colors">
       <div className="container-app grid grid-cols-2 gap-10 py-14 md:grid-cols-5">
         <div className="col-span-2">
           <Logo />
@@ -41,11 +41,11 @@ export function Footer() {
         </div>
         {columns.map((col) => (
           <div key={col.title}>
-            <h4 className="text-sm font-semibold text-ink">{col.title}</h4>
+            <h4 className="font-mono text-xs uppercase tracking-wider text-ink-muted font-semibold">{col.title}</h4>
             <ul className="mt-3 space-y-2">
               {col.links.map((l) => (
                 <li key={l.label}>
-                  <Link href={l.href} className="text-sm text-ink-muted hover:text-ink">
+                  <Link href={l.href} className="text-sm text-ink-muted hover:text-ink transition-colors">
                     {l.label}
                   </Link>
                 </li>
@@ -55,10 +55,12 @@ export function Footer() {
         ))}
       </div>
       <div className="border-t border-border py-6">
-        <p className="container-app text-xs text-ink-muted">
+        <p className="container-app text-xs font-mono text-ink-muted">
           © {new Date().getFullYear()} UNIGAP. All rights reserved.
         </p>
       </div>
     </footer>
   );
 }
+
+

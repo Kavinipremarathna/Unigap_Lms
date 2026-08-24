@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Menu, X, ArrowRight } from "lucide-react";
 import { Logo } from "./logo";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useSiteContent } from "@/lib/context/site-content-context";
 
 const links = [
@@ -17,15 +18,15 @@ export function Navbar() {
   const { landing } = useSiteContent();
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-surface/95 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-border bg-bg/90 backdrop-blur-md transition-colors">
       {landing.bannerActive && landing.bannerText && (
-        <div className="bg-gradient-to-r from-[#520051] via-[#920090] to-[#d400d1] px-4 py-2 text-center text-xs font-semibold text-white shadow-sm">
+        <div className="border-b border-primary/30 bg-primary/10 px-4 py-2 text-center text-xs font-mono font-medium text-primary">
           <Link
             href={landing.bannerLink || "/pricing"}
             className="inline-flex items-center justify-center gap-1.5 hover:underline"
           >
             <span>{landing.bannerText}</span>
-            <ArrowRight size={13} className="shrink-0" />
+            <ArrowRight size={13} className="shrink-0 text-primary" />
           </Link>
         </div>
       )}
@@ -48,6 +49,8 @@ export function Navbar() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
+          <ThemeToggle />
+
           <Link href="/login">
             <Button variant="ghost" size="sm">
               Log in
@@ -59,14 +62,17 @@ export function Navbar() {
           </Link>
         </div>
 
-        <button
-          className="rounded-md p-2 text-ink md:hidden"
-          onClick={() => setOpen((v) => !v)}
-          aria-label={open ? "Close menu" : "Open menu"}
-          aria-expanded={open}
-        >
-          {open ? <X size={22} /> : <Menu size={22} />}
-        </button>
+        <div className="flex items-center gap-2 md:hidden">
+          <ThemeToggle />
+          <button
+            className="rounded-[4px] p-2 text-ink hover:bg-surface-2"
+            onClick={() => setOpen((v) => !v)}
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+          >
+            {open ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
       </div>
 
       {open && (
@@ -76,7 +82,7 @@ export function Navbar() {
               <Link
                 key={l.href}
                 href={l.href}
-                className="rounded-md px-2 py-2.5 text-sm font-medium text-ink-muted hover:bg-surface-2 hover:text-ink"
+                className="rounded-[4px] px-3 py-2.5 text-sm font-medium text-ink-muted hover:bg-surface-2 hover:text-ink"
                 onClick={() => setOpen(false)}
               >
                 {l.label}
@@ -100,3 +106,5 @@ export function Navbar() {
     </header>
   );
 }
+
+

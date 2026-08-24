@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { PartyPopper, Flame, Target, Sparkles, CreditCard, CheckCheck } from "lucide-react";
+import { PartyPopper, Flame, Target, Sparkles, CreditCard, CheckCheck, Bell } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { SubpageHeroHeader } from "@/components/ui/subpage-hero-header";
 import { cn } from "@/lib/utils";
 
 const tabs = ["All", "Learning", "Achievements", "Payments", "System"] as const;
@@ -24,16 +25,22 @@ export default function NotificationsPage() {
 
   return (
     <div className="container-app py-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-ink">Notifications</h1>
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={() => setItems((prev) => prev.map((n) => ({ ...n, read: true })))}
-        >
-          <CheckCheck size={14} /> Mark all as read
-        </Button>
-      </div>
+      <SubpageHeroHeader
+        icon={Bell}
+        badgeText="System Alerts & Activity"
+        title="Notifications"
+        description="Stay updated with your course milestones, achievements, streaks, and account activity."
+        rightContent={
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => setItems((prev) => prev.map((n) => ({ ...n, read: true })))}
+          >
+            <CheckCheck size={14} /> Mark all as read
+          </Button>
+        }
+      />
+
 
       <div className="mt-5 flex flex-wrap gap-2">
         {tabs.map((t) => (

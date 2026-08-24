@@ -14,22 +14,22 @@ export function AICompanionCard({
   href?: string;
 }) {
   return (
-    <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-primary-50 to-surface p-5">
-      <div className="pointer-events-none absolute -right-6 -top-6 h-28 w-28 rounded-full bg-accent/10 blur-2xl" />
-      <div className="flex items-start gap-3">
+    <Card className="relative overflow-hidden border border-border bg-surface p-6 rounded-[4px]">
+      <div className="pointer-events-none absolute -right-6 -top-6 h-28 w-28 rounded-full bg-primary/5 blur-2xl" />
+      <div className="flex items-start gap-3.5">
         <motion.div
           animate={{ scale: [1, 1.06, 1] }}
           transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] border border-primary/30 bg-primary/15"
         >
-          <Sparkles size={18} className="text-white" />
+          <Sparkles size={18} className="text-primary" />
         </motion.div>
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-ink">Your Learning Companion</p>
+          <p className="font-serif text-base font-medium text-ink">Your Learning Companion</p>
           <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">{message}</p>
         </div>
       </div>
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-5 flex flex-wrap gap-2.5 pt-2">
         <Link href={href}>
           <Button size="sm" variant="primary">
             Continue Learning <ArrowRight size={14} />
@@ -44,3 +44,5 @@ export function AICompanionCard({
     </Card>
   );
 }
+
+

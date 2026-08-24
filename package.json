@@ -27,7 +27,6 @@
     "tailwind-merge": "2.4.0"
   },
   "devDependencies": {
-    "@prisma/cli": "^3.0.0-beta.30",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "20.14.12",
