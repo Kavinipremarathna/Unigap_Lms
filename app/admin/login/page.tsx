@@ -246,6 +246,15 @@ export default function AdminLoginPage() {
                   <button
                     type="button"
                     onClick={() => {
+                      setEmail("kkgpremarathna@gmail.com");
+                    }}
+                    className="flex-1 rounded border border-accent/30 bg-accent/10 px-2.5 py-1 text-xs text-accent font-bold hover:bg-accent/20 transition"
+                  >
+                    👑 Kavini (Super Admin)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
                       setEmail("admin@unigap.edu");
                       setPassword("Unigap@123");
                     }}
@@ -253,6 +262,7 @@ export default function AdminLoginPage() {
                   >
                     🛡️ Admin
                   </button>
+
                 </div>
               </div>
 
