@@ -19,7 +19,9 @@ import {
   ShieldAlert,
   ShieldCheck,
   Lock,
+  Video,
 } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import { useAdminAuth } from "@/lib/context/admin-auth-context";
 
@@ -55,6 +57,12 @@ const navigation: NavSection[] = [
         label: "Courses",
         icon: BookOpen,
       },
+      {
+        href: "/admin/videos",
+        label: "Video Library",
+        icon: Video,
+      },
+
       {
         href: "/admin/instructors",
         label: "Instructors",
