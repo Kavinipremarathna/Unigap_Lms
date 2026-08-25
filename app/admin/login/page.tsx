@@ -60,8 +60,9 @@ export default function AdminLoginPage() {
         localStorage.setItem("unigap_auth_logged_in", "true");
         window.dispatchEvent(new Event("unigap_auth_changed"));
       }
-      router.push("/admin");
+      window.location.href = "/admin";
     } catch (err: any) {
+
       setErrorMsg("Unable to connect to server. Please try again.");
     } finally {
       setIsLoading(false);

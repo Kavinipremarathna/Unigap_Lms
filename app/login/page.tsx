@@ -53,17 +53,18 @@ export default function LoginPage() {
         return;
       }
 
-      if (data.user.role === "SUPER_ADMIN") {
-        router.push("/admin");
+      if (data.user.role === "SUPER_ADMIN" || data.user.role === "ADMIN") {
+        if (typeof window !== "undefined") {
+          const normRole = (data.user.role || "").toLowerCase().includes("super") ? "super_admin" : "admin";
+          localStorage.setItem("unigap_admin_role", normRole);
+          localStorage.setItem("unigap_admin_profile", JSON.stringify({ ...data.user, role: normRole }));
+        }
+        window.location.href = "/admin";
         return;
       }
 
-      if (data.user.role === "ADMIN") {
-        router.push("/admin");
-        return;
-      }
+      window.location.href = "/dashboard";
 
-      router.push("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
       alert("Unable to connect to the server. Please try again.");
