@@ -230,7 +230,47 @@ export default function AdminLoginPage() {
                 />
               </div>
 
+              {/* Quick Fill Demo Credentials */}
+              <div className="rounded-[4px] border border-border bg-surface-2 p-3 space-y-2 text-xs font-mono">
+                <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider block">
+                  ⚡ Quick Demo Credentials (1-Click Fill)
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmail("superadmin@unigap.edu");
+                      setPassword("Unigap@123");
+                    }}
+                    className="flex-1 rounded border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs text-primary font-bold hover:bg-primary/20 transition cursor-pointer"
+                  >
+                    👑 Super Admin
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmail("kkgpremarathna@gmail.com");
+                      setPassword("Unigap@123");
+                    }}
+                    className="flex-1 rounded border border-accent/30 bg-accent/10 px-2.5 py-1 text-xs text-accent font-bold hover:bg-accent/20 transition cursor-pointer"
+                  >
+                    👑 Kavini (Super Admin)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmail("admin@unigap.edu");
+                      setPassword("Unigap@123");
+                    }}
+                    className="flex-1 rounded border border-border bg-surface px-2.5 py-1 text-xs text-ink font-bold hover:bg-surface-2 transition cursor-pointer"
+                  >
+                    🛡️ Admin
+                  </button>
+                </div>
+              </div>
+
               <button
+
 
                 type="submit"
                 disabled={isLoading}
