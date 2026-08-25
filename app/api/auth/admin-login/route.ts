@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { createToken } from "@/lib/auth";
+
 
 export async function POST(request: Request) {
   try {
@@ -71,9 +73,16 @@ export async function POST(request: Request) {
     }
 
     // 5. Standard Admin Login (Assigned by Super Admin)
-    return NextResponse.json({
+    const token = createToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
+    const response = NextResponse.json({
       requires2FA: false,
       message: "Admin login successful.",
+      token,
       user: {
         id: user.id,
         name: user.name,
@@ -81,6 +90,16 @@ export async function POST(request: Request) {
         role: user.role,
       },
     });
+
+    response.cookies.set("auth_token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    });
+
+    return response;
   } catch (error) {
     console.error("Admin login error:", error);
     return NextResponse.json(
@@ -89,3 +108,4 @@ export async function POST(request: Request) {
     );
   }
 }
+

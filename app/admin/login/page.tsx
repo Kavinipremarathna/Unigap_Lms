@@ -48,7 +48,15 @@ export default function AdminLoginPage() {
 
       // Standard Admin login succeeded
       if (typeof window !== "undefined") {
-        localStorage.setItem("unigap_admin_profile", JSON.stringify(data.user));
+        const normRole = (data.user?.role || "").toLowerCase().includes("super") ? "super_admin" : "admin";
+        localStorage.setItem("unigap_admin_role", normRole);
+        localStorage.setItem("unigap_admin_profile", JSON.stringify({ ...data.user, role: normRole }));
+        if (data.token) {
+          localStorage.setItem("unigap_auth_token", data.token);
+        }
+        localStorage.setItem("unigap_auth_user", JSON.stringify({ ...data.user, role: normRole }));
+        localStorage.setItem("unigap_auth_logged_in", "true");
+        window.dispatchEvent(new Event("unigap_auth_changed"));
       }
       router.push("/admin");
     } catch (err: any) {
@@ -85,14 +93,24 @@ export default function AdminLoginPage() {
 
       setVerifiedSuccess(true);
       if (typeof window !== "undefined") {
-        localStorage.setItem("unigap_admin_profile", JSON.stringify(data.user));
+        const normRole = (data.user?.role || "").toLowerCase().includes("super") ? "super_admin" : "admin";
+        localStorage.setItem("unigap_admin_role", normRole);
+        localStorage.setItem("unigap_admin_profile", JSON.stringify({ ...data.user, role: normRole }));
+        if (data.token) {
+          localStorage.setItem("unigap_auth_token", data.token);
+        }
+        localStorage.setItem("unigap_auth_user", JSON.stringify({ ...data.user, role: normRole }));
+        localStorage.setItem("unigap_auth_logged_in", "true");
+        window.dispatchEvent(new Event("unigap_auth_changed"));
       }
 
       setTimeout(() => {
         router.push("/admin");
       }, 1000);
+
     } catch (err: any) {
       setErrorMsg("Failed to verify email code.");
+
     } finally {
       setIsLoading(false);
     }
@@ -209,6 +227,35 @@ export default function AdminLoginPage() {
                 />
               </div>
 
+              {/* Quick Fill Demo Credentials */}
+              <div className="rounded-[4px] border border-border bg-surface-2 p-3 space-y-2 text-xs font-mono">
+                <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider block">
+                  ⚡ Quick Demo Credentials (1-Click Fill)
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmail("superadmin@unigap.edu");
+                      setPassword("Unigap@123");
+                    }}
+                    className="flex-1 rounded border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs text-primary font-bold hover:bg-primary/20 transition"
+                  >
+                    👑 Super Admin
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmail("admin@unigap.edu");
+                      setPassword("Unigap@123");
+                    }}
+                    className="flex-1 rounded border border-border bg-surface px-2.5 py-1 text-xs text-ink font-bold hover:bg-surface-2 transition"
+                  >
+                    🛡️ Admin
+                  </button>
+                </div>
+              </div>
+
               <button
                 type="submit"
                 disabled={isLoading}
@@ -224,6 +271,7 @@ export default function AdminLoginPage() {
                   </>
                 )}
               </button>
+
             </form>
           ) : (
             <form onSubmit={handleVerifyCode} className="space-y-4">

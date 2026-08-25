@@ -138,24 +138,36 @@ const fallbackContextValue: AdminAuthContextType = {
 
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
 
+function normalizeRole(roleStr: string): AdminRole {
+  const norm = (roleStr || "").toLowerCase().replace("-", "_");
+  if (norm.includes("super")) return "super_admin";
+  if (norm.includes("admin")) return "admin";
+  return "learner";
+}
+
 export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   // Read saved role lazily on initial render so role state NEVER resets on page navigation
   const [admin, setAdmin] = useState<AdminProfile>(() => {
     if (typeof window !== "undefined") {
       try {
-        const savedRole = localStorage.getItem("unigap_admin_role") as AdminRole | null;
+        const savedRole = localStorage.getItem("unigap_admin_role");
         const savedProfile = localStorage.getItem("unigap_admin_profile");
-        const profile = savedProfile ? JSON.parse(savedProfile) : defaultAdminProfile;
-        if (savedRole && (savedRole === "super_admin" || savedRole === "admin" || savedRole === "learner")) {
-          return { ...profile, role: savedRole };
+        if (savedProfile) {
+          const profile = JSON.parse(savedProfile);
+          const role = normalizeRole(savedRole || profile.role || "super_admin");
+          return {
+            ...defaultAdminProfile,
+            ...profile,
+            role,
+          };
         }
-        return profile;
       } catch {
         // fallback to default
       }
     }
     return defaultAdminProfile;
   });
+
 
   const [activities, setActivities] = useState<AdminActivity[]>(initialActivities);
 
