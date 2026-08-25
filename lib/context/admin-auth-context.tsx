@@ -152,21 +152,38 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const savedRole = localStorage.getItem("unigap_admin_role");
         const savedProfile = localStorage.getItem("unigap_admin_profile");
-        if (savedProfile) {
-          const profile = JSON.parse(savedProfile);
-          const role = normalizeRole(savedRole || profile.role || "super_admin");
-          return {
-            ...defaultAdminProfile,
-            ...profile,
-            role,
-          };
+        const authUser = localStorage.getItem("unigap_auth_user");
+
+        let rawRole = savedRole;
+        let profile = savedProfile ? JSON.parse(savedProfile) : null;
+
+        if (authUser) {
+          try {
+            const parsedAuth = JSON.parse(authUser);
+            if (parsedAuth?.role) {
+              if (parsedAuth.role === "SUPER_ADMIN" || parsedAuth.role === "ADMIN" || parsedAuth.role === "super_admin" || parsedAuth.role === "admin") {
+                rawRole = parsedAuth.role;
+                if (!profile) profile = parsedAuth;
+              }
+            }
+          } catch {
+            // ignore
+          }
         }
+
+        const role = normalizeRole(rawRole || profile?.role || "super_admin");
+        return {
+          ...defaultAdminProfile,
+          ...(profile || {}),
+          role,
+        };
       } catch {
         // fallback to default
       }
     }
     return defaultAdminProfile;
   });
+
 
 
   const [activities, setActivities] = useState<AdminActivity[]>(initialActivities);
