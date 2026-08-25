@@ -48,22 +48,25 @@ export default function LoginPage() {
         return;
       }
 
-      if (redirectUrl !== "/dashboard") {
-        router.push(redirectUrl);
-        return;
-      }
-
       if (data.user.role === "SUPER_ADMIN" || data.user.role === "ADMIN") {
         if (typeof window !== "undefined") {
           const normRole = (data.user.role || "").toLowerCase().includes("super") ? "super_admin" : "admin";
           localStorage.setItem("unigap_admin_role", normRole);
           localStorage.setItem("unigap_admin_profile", JSON.stringify({ ...data.user, role: normRole }));
+          localStorage.setItem("unigap_auth_user", JSON.stringify({ ...data.user, role: normRole }));
+          localStorage.setItem("unigap_auth_logged_in", "true");
         }
         window.location.href = "/admin";
         return;
       }
 
+      if (redirectUrl && redirectUrl !== "/dashboard") {
+        window.location.href = redirectUrl;
+        return;
+      }
+
       window.location.href = "/dashboard";
+
 
     } catch (error) {
       console.error("Login error:", error);
