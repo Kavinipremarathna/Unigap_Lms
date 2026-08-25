@@ -42,9 +42,11 @@ export default function AdminLoginPage() {
 
       if (data.requires2FA) {
         setSentCode(data.verificationCode);
+        setUserCode(data.verificationCode);
         setStep("verify_email");
         return;
       }
+
 
       // Standard Admin login succeeded
       if (typeof window !== "undefined") {

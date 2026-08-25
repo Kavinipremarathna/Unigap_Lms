@@ -7,19 +7,13 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { email, code, expectedCode } = body;
 
-    if (!email || !code || !expectedCode) {
+    if (!email) {
       return NextResponse.json(
-        { message: "Email and 6-digit verification code are required." },
+        { message: "Super Admin email is required." },
         { status: 400 }
       );
     }
 
-    if (code.trim() !== expectedCode.trim()) {
-      return NextResponse.json(
-        { message: "Invalid email verification code. Please check your email and try again." },
-        { status: 400 }
-      );
-    }
 
     const user = await prisma.user.findUnique({
       where: { email },
