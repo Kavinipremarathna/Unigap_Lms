@@ -17,6 +17,19 @@ async function main() {
     },
   });
 
+  const kaviniSuperAdmin = await prisma.user.upsert({
+    where: { email: "kkgpremarathna@gmail.com" },
+    update: { role: "SUPER_ADMIN", passwordHash },
+    create: {
+      email: "kkgpremarathna@gmail.com",
+      name: "Kavini Gavesha",
+      passwordHash,
+      role: "SUPER_ADMIN",
+      department: "Executive Leadership",
+    },
+  });
+
+
   const admin = await prisma.user.upsert({
     where: { email: "admin@unigap.edu" },
     update: { role: "ADMIN", passwordHash },

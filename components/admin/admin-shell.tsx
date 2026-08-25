@@ -14,9 +14,32 @@ import {
 function AdminRouteGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { role, isSuperAdmin, isAdmin, isUser } = useAdminAuth();
+  const { role, isSuperAdmin, isAdmin, isUser, setRole } = useAdminAuth();
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedRole = localStorage.getItem("unigap_admin_role");
+      const authUser = localStorage.getItem("unigap_auth_user");
+      if (authUser) {
+        try {
+          const parsed = JSON.parse(authUser);
+          if (parsed?.role === "SUPER_ADMIN" || parsed?.role === "ADMIN" || parsed?.role === "super_admin" || parsed?.role === "admin") {
+            const normRole = (parsed.role || "").toLowerCase().includes("super") ? "super_admin" : "admin";
+            if (savedRole !== normRole) {
+              localStorage.setItem("unigap_admin_role", normRole);
+              localStorage.setItem("unigap_admin_profile", JSON.stringify({ ...parsed, role: normRole }));
+              window.location.reload();
+            }
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
+  }, []);
 
   const isAllowed = isRouteAllowedForRole(pathname, role);
+
 
   if (isUser) {
     return (
