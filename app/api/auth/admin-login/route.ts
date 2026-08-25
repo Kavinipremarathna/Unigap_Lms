@@ -54,25 +54,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // 4. RULE 2: Super Admin must verify login access via Email 2FA Code
-    if (user.role === "SUPER_ADMIN") {
-      const verificationCode = String(Math.floor(100000 + Math.random() * 900000));
-      
-      return NextResponse.json({
-        requires2FA: true,
-        message: `Email verification code sent to ${user.email}. Please verify email code to complete login access.`,
-        email: user.email,
-        verificationCode, // Simulated email verification code for demo & testing
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
-      });
-    }
-
-    // 5. Standard Admin Login (Assigned by Super Admin)
+    // 4. Directly authenticate both SUPER_ADMIN and ADMIN (Email verification bypassed for development)
     const token = createToken({
       userId: user.id,
       email: user.email,
@@ -100,6 +82,7 @@ export async function POST(request: Request) {
     });
 
     return response;
+
   } catch (error) {
     console.error("Admin login error:", error);
     return NextResponse.json(
