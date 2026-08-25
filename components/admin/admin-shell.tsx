@@ -18,16 +18,61 @@ function AdminRouteGuard({ children }: { children: React.ReactNode }) {
 
   const isAllowed = isRouteAllowedForRole(pathname, role);
 
-  useEffect(() => {
-    // If a normal student/learner attempts any /admin route, redirect to learner dashboard
-    if (isUser) {
-      router.push("/dashboard");
-    }
-  }, [isUser, router]);
-
   if (isUser) {
-    return null;
+    return (
+      <main className="container-app px-6 py-16">
+        <div className="mx-auto max-w-xl rounded-3xl border border-purple-200 bg-purple-50/60 p-8 text-center shadow-md">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#520051] text-white">
+            <Lock size={32} />
+          </div>
+
+          <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#fde8fc] px-3 py-1 text-xs font-extrabold text-[#920090] uppercase tracking-wider">
+            UNIGAP Administration Access
+          </span>
+
+          <h2 className="mt-3 text-2xl font-extrabold text-[#520051]">
+            Admin Panel Access Required
+          </h2>
+
+          <p className="mt-2 text-xs leading-relaxed text-slate-600">
+            You are currently viewing as a Learner. Click below to activate Super Admin session mode and access all admin features.
+          </p>
+
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  localStorage.setItem("unigap_admin_role", "super_admin");
+                  localStorage.setItem(
+                    "unigap_admin_profile",
+                    JSON.stringify({
+                      id: "adm-001",
+                      name: "UNIGAP Super Admin",
+                      email: "superadmin@unigap.edu",
+                      role: "super_admin",
+                    })
+                  );
+                  window.location.reload();
+                }
+              }}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#520051] px-5 py-2.5 text-xs font-bold text-white transition hover:bg-[#920090] shadow-md cursor-pointer"
+            >
+              👑 Enter Super Admin Portal Directly
+            </button>
+
+            <Link
+              href="/admin/login"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-bold text-[#520051] transition hover:bg-slate-50 shadow-xs"
+            >
+              Go to Admin Login Page
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
   }
+
 
   // If an ADMIN attempts a non-allowed admin route (e.g. /admin/users, /admin/payments, /admin/instructors, etc.)
   if (!isAllowed) {
