@@ -89,7 +89,7 @@ async function main() {
     },
   });
 
-  const achievement = await prisma.achievement.upsert({
+  const achievement1 = await prisma.achievement.upsert({
     where: { id: "achieve-first-step" },
     update: {},
     create: {
@@ -104,13 +104,58 @@ async function main() {
     },
   });
 
+  const achievement2 = await prisma.achievement.upsert({
+    where: { id: "achieve-7-day-streak" },
+    update: {},
+    create: {
+      id: "achieve-7-day-streak",
+      title: "7 Day Streak",
+      description: "Learn for seven consecutive days without missing a day.",
+      requirement: "Maintain a 7-day streak",
+      xp: 200,
+      category: "streak",
+      icon: "flame",
+      active: true,
+    },
+  });
+
+  const achievement3 = await prisma.achievement.upsert({
+    where: { id: "achieve-quiz-master" },
+    update: {},
+    create: {
+      id: "achieve-quiz-master",
+      title: "Quiz Master",
+      description: "Successfully complete 10 quizzes with a passing grade.",
+      requirement: "Complete 10 quizzes",
+      xp: 150,
+      category: "mastery",
+      icon: "trophy",
+      active: true,
+    },
+  });
+
+  const achievement4 = await prisma.achievement.upsert({
+    where: { id: "achieve-goal-crusher" },
+    update: {},
+    create: {
+      id: "achieve-goal-crusher",
+      title: "Goal Crusher",
+      description: "Complete five weekly learning goals.",
+      requirement: "Complete 5 weekly goals",
+      xp: 300,
+      category: "goal",
+      icon: "target",
+      active: true,
+    },
+  });
+
   console.log("Seed completed successfully.");
   console.log(`Super Admin: ${superAdmin.email}`);
   console.log(`Admin: ${admin.email}`);
   console.log(`Student: ${student.email}`);
   console.log(`Instructor: ${instructor.name}`);
   console.log(`Course: ${course.title}`);
-  console.log(`Achievement: ${achievement.title}`);
+  console.log(`Achievements seeded in PostgreSQL DB: 4`);
 }
 
 main()

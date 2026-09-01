@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Award,
   Search,
@@ -17,34 +17,46 @@ import {
   Zap,
   Filter,
   Trophy,
+  Loader2,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { SubpageHeroHeader } from "@/components/ui/subpage-hero-header";
-import { achievements as initialAchievements } from "@/lib/mock/achievements";
-
 import { Achievement } from "@/lib/types";
 import { getSafeIcon } from "@/components/ui/safe-icon";
-
-const iconMap = {
-  Award,
-  Target,
-  Flame,
-  BookOpen,
-  Brain,
-  GraduationCap,
-  TrendingUp,
-  Moon,
-  Rocket,
-};
 
 type CategoryFilter = "all" | "milestone" | "streak" | "mastery" | "goal";
 type StatusFilter = "all" | "unlocked" | "locked";
 
 export default function LearnerAchievementsPage() {
-  const [achievements] = useState<Achievement[]>(initialAchievements);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>("all");
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>("all");
+
+  const fetchDatabaseAchievements = async () => {
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("unigap_auth_token") : null;
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const res = await fetch("/api/achievements", { headers });
+      const data = await res.json();
+      if (res.ok && data.achievements) {
+        setAchievements(data.achievements);
+      }
+    } catch (err) {
+      console.error("Error fetching database achievements:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDatabaseAchievements();
+  }, []);
 
   const filteredAchievements = achievements.filter((achievement) => {
     const matchesSearch = `${achievement.title} ${achievement.description}`

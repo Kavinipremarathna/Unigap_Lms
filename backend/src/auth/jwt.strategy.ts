@@ -18,7 +18,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
         (request: any) => request?.cookies?.auth_token,
       ]),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET || 'unigap-super-secret-jwt-key-2026',
+      secretOrKey: process.env.JWT_SECRET,
     });
   }
 

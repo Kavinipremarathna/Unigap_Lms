@@ -26,7 +26,15 @@ export function getStoredCourses(): Course[] {
     if (custom) {
       const parsed: Course[] = JSON.parse(custom);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+        // Deduplicate courses by normalized title & slug
+        const uniqueMap = new Map<string, Course>();
+        for (const item of parsed) {
+          const key = (item.title || item.slug || item.id).toLowerCase().trim();
+          if (!uniqueMap.has(key)) {
+            uniqueMap.set(key, item);
+          }
+        }
+        return Array.from(uniqueMap.values());
       }
     }
   } catch {
@@ -43,7 +51,9 @@ export function getPublishedCourses(): Course[] {
 export function saveCustomCourse(newCourse: Course): Course {
   if (typeof window === "undefined") return newCourse;
   const current = getStoredCourses();
-  const existingIndex = current.findIndex((c) => c.id === newCourse.id);
+  const existingIndex = current.findIndex(
+    (c) => c.id === newCourse.id || c.title.toLowerCase().trim() === newCourse.title.toLowerCase().trim()
+  );
   let updated: Course[];
   if (existingIndex >= 0) {
     updated = [...current];
@@ -59,6 +69,16 @@ export function saveCustomCourse(newCourse: Course): Course {
     // fallback
   }
   return newCourse;
+}
+
+export function clearAllStoredCourses(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem("unigap_admin_courses");
+    window.dispatchEvent(new Event("unigap_courses_updated"));
+  } catch {
+    // fallback
+  }
 }
 
 export function deleteStoredCourse(id: string): void {

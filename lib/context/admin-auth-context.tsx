@@ -146,8 +146,9 @@ function normalizeRole(roleStr: string): AdminRole {
 }
 
 export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
-  // Read saved role lazily on initial render so role state NEVER resets on page navigation
-  const [admin, setAdmin] = useState<AdminProfile>(() => {
+  const [admin, setAdmin] = useState<AdminProfile>(defaultAdminProfile);
+
+  useEffect(() => {
     if (typeof window !== "undefined") {
       try {
         const savedRole = localStorage.getItem("unigap_admin_role");
@@ -161,7 +162,12 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
           try {
             const parsedAuth = JSON.parse(authUser);
             if (parsedAuth?.role) {
-              if (parsedAuth.role === "SUPER_ADMIN" || parsedAuth.role === "ADMIN" || parsedAuth.role === "super_admin" || parsedAuth.role === "admin") {
+              if (
+                parsedAuth.role === "SUPER_ADMIN" ||
+                parsedAuth.role === "ADMIN" ||
+                parsedAuth.role === "super_admin" ||
+                parsedAuth.role === "admin"
+              ) {
                 rawRole = parsedAuth.role;
                 if (!profile) profile = parsedAuth;
               }
@@ -171,18 +177,19 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
-        const role = normalizeRole(rawRole || profile?.role || "super_admin");
-        return {
-          ...defaultAdminProfile,
-          ...(profile || {}),
-          role,
-        };
+        if (savedRole || savedProfile || authUser) {
+          const role = normalizeRole(rawRole || profile?.role || "super_admin");
+          setAdmin({
+            ...defaultAdminProfile,
+            ...(profile || {}),
+            role,
+          });
+        }
       } catch {
         // fallback to default
       }
     }
-    return defaultAdminProfile;
-  });
+  }, []);
 
 
 

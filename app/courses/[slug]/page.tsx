@@ -35,8 +35,15 @@ export default function CourseDetailPage() {
   const [activeModuleIndex, setActiveModuleIndex] = useState(0);
   const [activeLessonIndex, setActiveLessonIndex] = useState(0);
   const [completedLessonIds, setCompletedLessonIds] = useState<Set<string>>(new Set());
-  const [quizAnswer, setQuizAnswer] = useState<number | null>(null);
+  const [quizAnswers, setQuizAnswers] = useState<Record<number, number>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
+  const [quizScore, setQuizScore] = useState<{
+    correctCount: number;
+    totalCount: number;
+    earnedMarks: number;
+    totalMarks: number;
+    passed: boolean;
+  } | null>(null);
 
   // Read slug from URL path
   const [slug, setSlug] = useState<string>("");
@@ -54,8 +61,93 @@ export default function CourseDetailPage() {
     }
   }, []);
 
-  const loadCourseData = () => {
+  const loadCourseData = async () => {
     if (!slug) return;
+    try {
+      const res = await fetch("/api/admin/courses");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.courses)) {
+          const found = data.courses.find(
+            (c: any) => c.slug === slug || c.id === slug || c.slug?.toLowerCase() === slug?.toLowerCase()
+          );
+
+          if (found) {
+            const mapped: Course = {
+              id: found.id,
+              slug: found.slug,
+              title: found.title,
+              shortDescription: found.shortDescription || found.description,
+              description: found.description,
+              category: found.category,
+              level: found.level || "Beginner",
+              durationHours: found.durationHours || 10,
+              rating: typeof found.rating === "number" ? found.rating : 5.0,
+              reviewCount: 12,
+              learners: found.studentsCount || 0,
+              price: Number(found.price) || 0,
+              isFree: found.isFree,
+              thumbnailUrl: found.thumbnailUrl || null,
+              instructorId: found.instructorId,
+              instructorName: found.instructorName,
+              gradient: ["#520051", "#920090"],
+              outcomes: found.outcomes?.length
+                ? found.outcomes
+                : [
+                    "Master core principles and practical skills",
+                    "Hands-on exercises and real-world project workflows",
+                    "Industry best practices and certification readiness",
+                  ],
+              requirements: found.requirements?.length
+                ? found.requirements
+                : [
+                    "Basic understanding of the subject area",
+                    "A computer with internet access",
+                  ],
+              // Use the real curriculum from the database — this is what the admin saved
+              curriculum: Array.isArray(found.curriculum) && found.curriculum.length > 0
+                ? found.curriculum.map((m: any) => ({
+                    id: m.id,
+                    title: m.title,
+                    lessons: (m.lessons || []).map((l: any) => ({
+                      id: l.id,
+                      title: l.title,
+                      durationMin: l.durationMin ?? 10,
+                      type: l.type ?? "video",
+                      videoUrl: l.videoUrl ?? undefined,
+                      readingBody: l.readingBody ?? undefined,
+                      attachmentUrl: l.attachmentUrl ?? undefined,
+                      quizQuestion: l.quizQuestion ?? undefined,
+                      quizOptions: l.quizOptions ?? undefined,
+                      quizCorrectIndex: l.quizCorrectIndex ?? undefined,
+                      quizQuestions: l.quizQuestions ?? undefined,
+                      completed: false,
+                      locked: l.locked ?? false,
+                    })),
+                  }))
+                : [],
+            };
+
+            setCourse(mapped);
+            const stats = getUserStats();
+            let enrolled =
+              stats.enrolledCourseIds.includes(mapped.id) ||
+              stats.enrolledCourseIds.includes(mapped.slug);
+
+            if (!enrolled && isUserAuthenticated()) {
+              enrollInCourse(mapped);
+              enrolled = true;
+            }
+            setIsEnrolled(enrolled);
+            return;
+          }
+        }
+      }
+    } catch (err) {
+      console.error("CourseDetailPage fetch error:", err);
+    }
+
+    // Fallback to local
     const allCourses = getStoredCourses();
     const found =
       allCourses.find((c) => c.slug === slug || c.id === slug) ||
@@ -74,17 +166,6 @@ export default function CourseDetailPage() {
         enrolled = true;
       }
       setIsEnrolled(enrolled);
-
-      // Load completed lessons for this course
-      const savedCompleted = new Set<string>();
-      found.curriculum?.forEach((mod) => {
-        mod.lessons?.forEach((les) => {
-          if (stats.lessonProgress[`${found.id}_${les.id}`]) {
-            savedCompleted.add(les.id);
-          }
-        });
-      });
-      setCompletedLessonIds(savedCompleted);
     }
   };
 
@@ -154,6 +235,51 @@ export default function CourseDetailPage() {
     });
   };
 
+  const handleSelectLesson = (mi: number, li: number) => {
+    setActiveModuleIndex(mi);
+    setActiveLessonIndex(li);
+    setQuizAnswers({});
+    setQuizSubmitted(false);
+    setQuizScore(null);
+  };
+
+  const handleSubmitQuiz = (questions: any[]) => {
+    let correctCount = 0;
+    let earnedMarks = 0;
+    let totalMarks = 0;
+
+    questions.forEach((q, idx) => {
+      const qPoints = Number(q.points) || 10;
+      totalMarks += qPoints;
+      const studentAns = quizAnswers[idx];
+      const isCorrect = studentAns !== undefined && studentAns === q.correctIndex;
+      if (isCorrect) {
+        correctCount += 1;
+        earnedMarks += qPoints;
+      }
+    });
+
+    const passed = correctCount > 0 && correctCount >= Math.ceil(questions.length * 0.5);
+    setQuizScore({
+      correctCount,
+      totalCount: questions.length,
+      earnedMarks,
+      totalMarks,
+      passed,
+    });
+    setQuizSubmitted(true);
+
+    if (passed && currentLesson) {
+      handleToggleLessonComplete(currentLesson.id);
+    }
+  };
+
+  const handleRetakeQuiz = () => {
+    setQuizAnswers({});
+    setQuizSubmitted(false);
+    setQuizScore(null);
+  };
+
   const handleNextLesson = () => {
     if (!course?.curriculum) return;
     const currentMod = course.curriculum[activeModuleIndex];
@@ -163,8 +289,9 @@ export default function CourseDetailPage() {
       setActiveModuleIndex(activeModuleIndex + 1);
       setActiveLessonIndex(0);
     }
-    setQuizAnswer(null);
+    setQuizAnswers({});
     setQuizSubmitted(false);
+    setQuizScore(null);
   };
 
   if (!course) {
@@ -362,90 +489,315 @@ export default function CourseDetailPage() {
                   </div>
 
                   {/* Player Body depending on lesson type */}
-                  <div className="mt-6">
-                    {currentLesson.type === "video" && (
+                  <div className="mt-6 space-y-6">
+                    {/* If there is a video URL or type is video, render the video player */}
+                    {(currentLesson.type === "video" || currentLesson.videoUrl) && (
                       <div>
-                        <div className="relative aspect-video w-full overflow-hidden rounded-[4px] bg-bg border border-border flex flex-col items-center justify-center text-ink">
-                          <PlayCircle size={64} className="text-primary hover:scale-110 transition cursor-pointer" />
-                          <p className="mt-4 font-serif text-base font-medium">Interactive Video Player</p>
-                          <p className="text-xs font-mono text-ink-muted">Lesson Duration: {currentLesson.durationMin} minutes</p>
-                        </div>
-
-                        <div className="mt-6 rounded-[4px] bg-surface-2 p-5 border border-border">
-                          <h4 className="text-xs font-mono font-semibold text-primary uppercase tracking-wider">Lesson Notes & Key Takeaways</h4>
-                          <p className="mt-2 text-xs leading-relaxed text-ink-muted">
-                            In this video lesson, you will master the foundational mechanics of {currentLesson.title}. Follow along with the instructor, code along in your environment, and test your understanding using the quiz.
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {currentLesson.type === "reading" && (
-                      <div className="space-y-4 text-xs text-ink-muted leading-relaxed">
-                        <div className="rounded-[4px] bg-surface-2 p-5 border border-border">
-                          <h4 className="font-serif text-base font-medium text-ink">Article Guide: {currentLesson.title}</h4>
-                          <p className="mt-2 text-ink-muted">
-                            Welcome to this reading module. Read through the architectural overview and code examples carefully before marking the lesson as finished.
-                          </p>
-                        </div>
-
-                        <div className="rounded-[4px] bg-bg p-4 font-mono text-accent text-[11px] overflow-x-auto border border-border">
-                          <code>{`// Core Implementation Example\nfunction initializeLearningSystem() {\n  console.log("UNIGAP Course Engine Loaded Successfully");\n  return { status: "ACTIVE", progress: 100 };\n}`}</code>
-                        </div>
-                      </div>
-                    )}
-
-                    {currentLesson.type === "quiz" && (
-                      <div className="space-y-4">
-                        <div className="rounded-[4px] bg-surface-2 p-6 border border-border">
-                          <div className="flex items-center gap-2 text-xs font-mono text-primary">
-                            <HelpCircle size={16} /> Knowledge Check Assessment
-                          </div>
-                          <h3 className="mt-2 font-serif text-base font-medium text-ink">
-                            What is the primary architectural concept introduced in &quot;{currentLesson.title}&quot;?
-                          </h3>
-
-                          <div className="mt-4 space-y-2">
-                            {[
-                              "Modular component composition and state encapsulation",
-                              "Direct DOM manipulation without virtual diffing",
-                              "Synchronous blocking multi-threading",
-                              "Unstructured inline global state mutation",
-                            ].map((option, idx) => (
-                              <button
-                                key={idx}
-                                type="button"
-                                onClick={() => setQuizAnswer(idx)}
-                                className={`w-full text-left rounded-[4px] p-3.5 text-xs transition border ${
-                                  quizAnswer === idx
-                                    ? "border-primary bg-primary/15 font-semibold text-primary"
-                                    : "border-border bg-surface text-ink-muted hover:border-border-hover"
-                                }`}
-                              >
-                                {String.fromCharCode(65 + idx)}. {option}
-                              </button>
-                            ))}
-                          </div>
-
-                          <div className="mt-5 flex items-center justify-between">
-                            <button
-                              type="button"
-                              onClick={() => setQuizSubmitted(true)}
-                              disabled={quizAnswer === null}
-                              className="rounded-[4px] bg-primary px-5 py-2.5 text-xs font-semibold text-primary-fg hover:opacity-90 disabled:opacity-50"
-                            >
-                              Submit Answer
-                            </button>
-
-                            {quizSubmitted && (
-                              <span className="text-xs font-mono font-semibold text-accent flex items-center gap-1">
-                                <CheckCircle2 size={16} /> Correct! +25 XP Awarded
-                              </span>
+                        {currentLesson.videoUrl ? (
+                          <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-slate-950 border border-border shadow-md">
+                            {currentLesson.videoUrl.includes("youtube.com") || currentLesson.videoUrl.includes("vimeo.com") ? (
+                              <iframe
+                                src={currentLesson.videoUrl.replace("watch?v=", "embed/")}
+                                title={currentLesson.title}
+                                className="h-full w-full"
+                                allowFullScreen
+                              />
+                            ) : (
+                              <video
+                                key={currentLesson.videoUrl}
+                                src={currentLesson.videoUrl}
+                                controls
+                                autoPlay={false}
+                                playsInline
+                                preload="metadata"
+                                className="h-full w-full object-contain bg-black"
+                              />
                             )}
                           </div>
+                        ) : (
+                          <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-slate-900 border border-border flex flex-col items-center justify-center text-white p-6 shadow-md">
+                            <PlayCircle size={64} className="text-[#920090] hover:scale-110 transition cursor-pointer" />
+                            <p className="mt-4 font-serif text-base font-medium">Interactive Video Lesson Player</p>
+                            <p className="text-xs font-mono text-slate-300">Duration: {currentLesson.durationMin} minutes</p>
+                          </div>
+                        )}
+
+                        <div className="mt-6 rounded-xl bg-surface-2 p-5 border border-border">
+                          <h4 className="text-xs font-mono font-semibold text-primary uppercase tracking-wider">Lesson Notes & Key Takeaways</h4>
+                          <p className="mt-2 text-xs leading-relaxed text-ink-muted">
+                            {currentLesson.readingBody || `In this lesson, you will master the foundational mechanics of ${currentLesson.title}. Follow along with the instructor, complete the interactive content, and review the materials.`}
+                          </p>
                         </div>
                       </div>
                     )}
+
+                    {/* Article Reading content */}
+                    {currentLesson.type === "reading" && !currentLesson.videoUrl && (
+                      <div className="space-y-4 text-xs text-ink-muted leading-relaxed">
+                        <div className="rounded-xl bg-surface-2 p-5 border border-border">
+                          <h4 className="font-serif text-base font-medium text-ink">Article Guide: {currentLesson.title}</h4>
+                          <p className="mt-2 text-ink-muted whitespace-pre-line leading-relaxed">
+                            {currentLesson.readingBody || "Welcome to this reading module. Read through the architectural overview and code examples carefully before marking the lesson as finished."}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Attached Note & Downloadable Resource for ANY lesson */}
+                    {currentLesson.attachmentUrl && (
+                      <div className="rounded-xl bg-purple-50/80 dark:bg-purple-950/30 p-4 border border-purple-200 dark:border-purple-900/50 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#520051] text-white shadow-sm">
+                            <FileText size={22} />
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#920090] font-mono">Downloadable Resource</span>
+                            <h5 className="font-bold text-sm text-[#520051] dark:text-purple-300">
+                              {currentLesson.attachmentUrl.split("/").pop() || "Course Resource File"}
+                            </h5>
+                            <p className="text-[11px] font-mono text-slate-500 truncate max-w-sm">{currentLesson.attachmentUrl}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={`/api/download?url=${encodeURIComponent(currentLesson.attachmentUrl)}`}
+                            download={currentLesson.attachmentUrl.split("/").pop() || "resource.pdf"}
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-[#520051] px-4 py-2 text-xs font-bold text-white hover:bg-[#920090] transition shadow-sm"
+                          >
+                            Download Attachment ⤓
+                          </a>
+                        </div>
+                      </div>
+                    )}
+
+                    {currentLesson.type === "quiz" && (() => {
+                      const questions =
+                        currentLesson.quizQuestions && currentLesson.quizQuestions.length > 0
+                          ? currentLesson.quizQuestions
+                          : currentLesson.quizQuestion
+                          ? [
+                              {
+                                id: 1,
+                                question: currentLesson.quizQuestion,
+                                options: currentLesson.quizOptions && currentLesson.quizOptions.length > 0 ? currentLesson.quizOptions : ["Option A", "Option B", "Option C", "Option D"],
+                                correctIndex: currentLesson.quizCorrectIndex ?? 0,
+                                points: 10,
+                              },
+                            ]
+                          : [];
+
+                      const allAnswered = questions.length > 0 && questions.every((_, idx) => quizAnswers[idx] !== undefined);
+                      const totalPossibleMarks = questions.reduce((sum, q) => sum + (Number(q.points) || 10), 0);
+
+                      return (
+                        <div className="space-y-6">
+                          <div className="rounded-2xl bg-surface-2 p-6 border border-border space-y-6 shadow-sm">
+                            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+                              <div className="flex items-center gap-2 text-xs font-mono text-primary font-bold">
+                                <HelpCircle size={18} />
+                                <span className="uppercase tracking-wider">Knowledge Check Assessment</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="rounded-full bg-primary/15 px-3 py-1 text-xs font-mono font-bold text-primary">
+                                  {questions.length} Question{questions.length > 1 ? "s" : ""}
+                                </span>
+                                <span className="rounded-full bg-purple-100 dark:bg-purple-950 px-3 py-1 text-xs font-mono font-bold text-[#520051] dark:text-purple-300">
+                                  {totalPossibleMarks} Total Marks
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Score Summary Banner if submitted */}
+                            {quizSubmitted && quizScore && (
+                              <div
+                                className={`rounded-xl p-5 border flex flex-wrap items-center justify-between gap-4 ${
+                                  quizScore.passed
+                                    ? "border-emerald-500/80 bg-emerald-50/80 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200"
+                                    : "border-red-500/80 bg-red-50/80 dark:bg-red-950/40 text-red-900 dark:text-red-200"
+                                }`}
+                              >
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xl">
+                                      {quizScore.passed ? "🎉" : "📝"}
+                                    </span>
+                                    <h4 className="font-serif text-base font-bold">
+                                      {quizScore.passed ? "Assessment Passed!" : "Assessment Needs Review"}
+                                    </h4>
+                                  </div>
+                                  <p className="text-xs">
+                                    Score: <strong className="text-sm font-bold">{quizScore.correctCount} / {quizScore.totalCount}</strong> questions correct (
+                                    {Math.round((quizScore.earnedMarks / (quizScore.totalMarks || 1)) * 100)}%) —{" "}
+                                    <strong className="text-sm font-bold">{quizScore.earnedMarks} / {quizScore.totalMarks} Marks</strong> awarded!
+                                  </p>
+                                  <p className="text-[11px] text-ink-muted">
+                                    {quizScore.passed
+                                      ? "You answered the required questions correctly according to instructor marking."
+                                      : "Only questions matching the instructor-marked answer receive points. Review answers below and retake if needed."}
+                                  </p>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={handleRetakeQuiz}
+                                  className="inline-flex items-center gap-1.5 rounded-xl border border-current bg-white dark:bg-slate-900 px-4 py-2 text-xs font-bold shadow-xs hover:opacity-90 transition cursor-pointer"
+                                >
+                                  Retake Quiz ↺
+                                </button>
+                              </div>
+                            )}
+
+                            {/* Questions list */}
+                            <div className="space-y-6">
+                              {questions.map((q, qIdx) => {
+                                const studentChoice = quizAnswers[qIdx];
+                                const isCorrect = studentChoice !== undefined && studentChoice === q.correctIndex;
+                                const qPoints = Number(q.points) || 10;
+
+                                return (
+                                  <div
+                                    key={q.id || qIdx}
+                                    className={`rounded-xl border p-5 space-y-4 transition ${
+                                      quizSubmitted
+                                        ? isCorrect
+                                          ? "border-emerald-300 bg-emerald-50/40 dark:bg-emerald-950/20"
+                                          : "border-red-300 bg-red-50/40 dark:bg-red-950/20"
+                                        : "border-border bg-surface"
+                                    }`}
+                                  >
+                                    <div className="flex items-start justify-between gap-3">
+                                      <div className="flex items-start gap-2.5">
+                                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/15 text-xs font-bold text-primary mt-0.5">
+                                          {qIdx + 1}
+                                        </span>
+                                        <h4 className="font-serif text-sm font-medium text-ink leading-relaxed">
+                                          {q.question || `Question ${qIdx + 1}`}
+                                        </h4>
+                                      </div>
+
+                                      <div className="flex items-center gap-2 shrink-0">
+                                        <span className="text-[11px] font-mono font-bold text-ink-muted bg-surface-2 px-2.5 py-0.5 rounded-md border border-border">
+                                          {qPoints} pts
+                                        </span>
+                                        {quizSubmitted && (
+                                          isCorrect ? (
+                                            <span className="rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-bold text-white flex items-center gap-1">
+                                              <CheckCircle2 size={12} /> +{qPoints} pts
+                                            </span>
+                                          ) : (
+                                            <span className="rounded-full bg-red-600 px-2.5 py-0.5 text-[10px] font-bold text-white flex items-center gap-1">
+                                              0 / {qPoints} pts
+                                            </span>
+                                          )
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {/* Options */}
+                                    <div className="space-y-2">
+                                      {q.options.map((option: string, optIdx: number) => {
+                                        const isSelected = studentChoice === optIdx;
+                                        const isTargetAnswer = q.correctIndex === optIdx;
+                                        const letter = String.fromCharCode(65 + optIdx);
+
+                                        let optionClasses = "border-border bg-surface-2 text-ink-muted hover:border-primary/60 hover:bg-surface";
+                                        let badge = null;
+
+                                        if (quizSubmitted) {
+                                          if (isSelected && isTargetAnswer) {
+                                            optionClasses = "border-emerald-600 bg-emerald-100/70 dark:bg-emerald-950/60 font-semibold text-emerald-900 dark:text-emerald-200 shadow-xs";
+                                            badge = (
+                                              <span className="rounded-md bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white shrink-0">
+                                                ✓ Correct Answer (+{qPoints} marks)
+                                              </span>
+                                            );
+                                          } else if (isSelected && !isTargetAnswer) {
+                                            optionClasses = "border-red-500 bg-red-100/70 dark:bg-red-950/60 font-semibold text-red-900 dark:text-red-200 shadow-xs";
+                                            badge = (
+                                              <span className="rounded-md bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white shrink-0">
+                                                ✗ Your Selection (Incorrect)
+                                              </span>
+                                            );
+                                          } else if (isTargetAnswer) {
+                                            optionClasses = "border-emerald-500/70 bg-emerald-50/60 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 font-semibold";
+                                            badge = (
+                                              <span className="rounded-md bg-emerald-700 px-2 py-0.5 text-[10px] font-bold text-white shrink-0">
+                                                ✓ Instructor's Answer
+                                              </span>
+                                            );
+                                          }
+                                        } else if (isSelected) {
+                                          optionClasses = "border-primary bg-primary/15 font-semibold text-primary shadow-xs";
+                                        }
+
+                                        return (
+                                          <button
+                                            key={optIdx}
+                                            type="button"
+                                            disabled={quizSubmitted}
+                                            onClick={() => {
+                                              if (!quizSubmitted) {
+                                                setQuizAnswers((prev) => ({
+                                                  ...prev,
+                                                  [qIdx]: optIdx,
+                                                }));
+                                              }
+                                            }}
+                                            className={`w-full text-left rounded-xl p-3 text-xs transition border flex items-center justify-between gap-3 ${optionClasses}`}
+                                          >
+                                            <div className="flex items-center gap-2.5 min-w-0">
+                                              <span
+                                                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold ${
+                                                  isSelected
+                                                    ? "bg-primary text-white"
+                                                    : "bg-surface text-ink-muted border border-border"
+                                                }`}
+                                              >
+                                                {letter}
+                                              </span>
+                                              <span className="truncate">{option}</span>
+                                            </div>
+                                            {badge}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            {/* Submit Button */}
+                            <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-4">
+                              <span className="text-xs font-mono text-ink-muted">
+                                {!quizSubmitted
+                                  ? `${Object.keys(quizAnswers).length} of ${questions.length} question${questions.length > 1 ? "s" : ""} answered`
+                                  : `Completed ${quizScore?.correctCount || 0}/${questions.length} correct`}
+                              </span>
+
+                              {!quizSubmitted ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleSubmitQuiz(questions)}
+                                  disabled={!allAnswered}
+                                  className="rounded-xl bg-primary px-6 py-2.5 text-xs font-bold text-primary-fg hover:opacity-90 disabled:opacity-50 transition shadow-sm cursor-pointer"
+                                >
+                                  Submit Quiz Assessment
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={handleRetakeQuiz}
+                                  className="rounded-xl border border-border bg-surface px-5 py-2 text-xs font-semibold text-ink-muted hover:text-ink transition cursor-pointer"
+                                >
+                                  Try Again ↺
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Navigation controls */}
@@ -505,10 +857,7 @@ export default function CourseDetailPage() {
                             <button
                               key={les.id || li}
                               type="button"
-                              onClick={() => {
-                                setActiveModuleIndex(mi);
-                                setActiveLessonIndex(li);
-                              }}
+                              onClick={() => handleSelectLesson(mi, li)}
                               className={`w-full flex items-center justify-between p-3 text-left transition text-xs ${
                                 isActive ? "bg-primary/15 font-semibold text-primary" : "hover:bg-surface text-ink-muted"
                               }`}
@@ -516,7 +865,7 @@ export default function CourseDetailPage() {
                               <div className="flex items-center gap-2 min-w-0">
                                 {isDone ? (
                                   <CheckCircle2 size={14} className="text-accent shrink-0" />
-                                ) : les.type === "video" ? (
+                                ) : les.videoUrl || les.type === "video" ? (
                                   <PlayCircle size={14} className="text-primary shrink-0" />
                                 ) : les.type === "quiz" ? (
                                   <HelpCircle size={14} className="text-primary shrink-0" />
@@ -525,7 +874,15 @@ export default function CourseDetailPage() {
                                 )}
                                 <span className="truncate">{les.title}</span>
                               </div>
-                              <span className="text-[10px] font-mono text-ink-muted shrink-0 ml-2">{les.durationMin}m</span>
+                              <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                                {les.attachmentUrl && (
+                                  <span className="text-[11px]" title="Resource attachment available">📎</span>
+                                )}
+                                {les.videoUrl && (
+                                  <span className="text-[11px]" title="Video lesson available">🎥</span>
+                                )}
+                                <span className="text-[10px] font-mono text-ink-muted">{les.durationMin}m</span>
+                              </div>
                             </button>
                           );
                         })}

@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     });
 
     // 2. Generate a new JWT token with updated login access credentials (new email)
-    const newToken = createToken({
+    const newToken = await createToken({
       userId: updatedUser.id,
       email: updatedUser.email,
       role: updatedUser.role,

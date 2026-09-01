@@ -9,12 +9,13 @@ function isCourseRoute(pathname: string) {
   );
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isAdminRoute = pathname.startsWith("/admin");
+  const isAdminLoginRoute = pathname === "/admin/login";
 
-  if (!isAdminRoute) {
+  if (!isAdminRoute || isAdminLoginRoute) {
     return NextResponse.next();
   }
 
@@ -29,7 +30,7 @@ export function middleware(request: NextRequest) {
   }
 
   try {
-    const payload = verifyToken(token);
+    const payload = await verifyToken(token);
 
     // SUPER ADMIN -> full admin access
     if (payload.role === "SUPER_ADMIN") {

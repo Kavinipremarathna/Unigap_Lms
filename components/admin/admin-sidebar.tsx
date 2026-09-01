@@ -137,6 +137,20 @@ const navigation: NavSection[] = [
   },
 ];
 
+function getAvatarText(avatar?: string | null, name?: string): string {
+  if (avatar && avatar.trim() && avatar.length <= 4) {
+    return avatar.toUpperCase();
+  }
+  if (name && name.trim()) {
+    const parts = name.trim().split(" ").filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return parts[0].substring(0, 2).toUpperCase();
+  }
+  return "SA";
+}
+
 export function AdminSidebar() {
   const pathname = usePathname();
   const { admin, isSuperAdmin } = useAdminAuth();
@@ -243,10 +257,10 @@ export function AdminSidebar() {
           className="flex items-center gap-3 rounded-xl p-2 transition hover:bg-[#faf5fa]"
         >
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#520051] to-[#d400d1] text-xs font-bold text-white shadow-xs">
-            {admin.avatar}
+            {getAvatarText(admin?.avatar, admin?.name)}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-bold text-[#520051]">{admin.name}</p>
+            <p className="truncate text-xs font-bold text-[#520051]">{admin?.name || "UNIGAP Admin"}</p>
             <p className="truncate text-[10px] text-slate-500">
               {isSuperAdmin ? "SUPER_ADMIN" : "ADMIN"}
             </p>

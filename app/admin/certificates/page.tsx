@@ -10,19 +10,64 @@ import {
   ShieldCheck,
   X,
   FileCheck,
+  Eye,
 } from "lucide-react";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { getStoredCertificates, IssuedCertificate } from "@/lib/mock/admin";
+import { CertificateModal, CertificateData } from "@/components/certificates/certificate-modal";
+
+const defaultMockCertificates: IssuedCertificate[] = [
+  {
+    id: "cert-101",
+    certificateHash: "UNI-CERT-2026-8819A",
+    recipientName: "Kavini Gavesha",
+    recipientEmail: "kkgpremarathna@gmail.com",
+    courseTitle: "JavaScript & TypeScript Mastery 2026",
+    issueDate: "August 28, 2026",
+    grade: "Distinction (98%)",
+    status: "valid",
+  },
+  {
+    id: "cert-102",
+    certificateHash: "UNI-CERT-2026-9921B",
+    recipientName: "Alex Rivera",
+    recipientEmail: "alex.rivera@unigap.edu",
+    courseTitle: "Fullstack Next.js & React Masterclass",
+    issueDate: "August 20, 2026",
+    grade: "Pass (92%)",
+    status: "valid",
+  },
+  {
+    id: "cert-103",
+    certificateHash: "UNI-CERT-2026-4410C",
+    recipientName: "Sarah Chen",
+    recipientEmail: "sarah.chen@unigap.edu",
+    courseTitle: "Python Data Science & Machine Learning",
+    issueDate: "August 15, 2026",
+    grade: "Distinction (99%)",
+    status: "valid",
+  },
+];
 
 export default function AdminCertificatesPage() {
-  const [certificates, setCertificates] = useState<IssuedCertificate[]>([]);
+  const [certificates, setCertificates] = useState<IssuedCertificate[]>(defaultMockCertificates);
   const [search, setSearch] = useState("");
   const [verifyInput, setVerifyInput] = useState("");
   const [verifyResult, setVerifyResult] = useState<IssuedCertificate | null | "not_found">(null);
   const [showIssueModal, setShowIssueModal] = useState(false);
+  const [selectedPreviewCert, setSelectedPreviewCert] = useState<CertificateData | null>(null);
+
+  const [newRecipientName, setNewRecipientName] = useState("");
+  const [newRecipientEmail, setNewRecipientEmail] = useState("");
+  const [newCourseTitle, setNewCourseTitle] = useState("");
 
   const loadCertificates = () => {
-    setCertificates(getStoredCertificates());
+    const stored = getStoredCertificates();
+    if (stored && stored.length > 0) {
+      setCertificates(stored);
+    } else {
+      setCertificates(defaultMockCertificates);
+    }
   };
 
   useEffect(() => {
@@ -45,6 +90,38 @@ export default function AdminCertificatesPage() {
     setVerifyResult(found || "not_found");
   };
 
+  const handleIssueCertificate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newRecipientName.trim() || !newCourseTitle.trim()) return;
+
+    const created: IssuedCertificate = {
+      id: `cert-${Date.now()}`,
+      certificateHash: `UNI-CERT-2026-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
+      recipientName: newRecipientName.trim(),
+      recipientEmail: newRecipientEmail.trim() || "learner@unigap.edu",
+      courseTitle: newCourseTitle.trim(),
+      issueDate: new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
+      grade: "Distinction",
+      status: "valid",
+    };
+
+    const updated = [created, ...certificates];
+    setCertificates(updated);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("unigap_admin_certificates", JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+    }
+
+    setNewRecipientName("");
+    setNewRecipientEmail("");
+    setNewCourseTitle("");
+    setShowIssueModal(false);
+    setSelectedPreviewCert(created);
+  };
+
   return (
     <AdminShell>
       <main className="container-app px-6 py-8">
@@ -54,14 +131,14 @@ export default function AdminCertificatesPage() {
             <p className="text-sm font-semibold text-[#920090]">Credentials Registry</p>
             <h1 className="mt-1 text-3xl font-bold text-[#520051]">Issued Certificates</h1>
             <p className="mt-1 text-sm text-slate-500">
-              Manage course completion credentials, cryptographic hashes, and verification queries.
+              Manage course completion credentials with enrolled student names and course titles.
             </p>
           </div>
 
           <button
             type="button"
             onClick={() => setShowIssueModal(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#520051] px-4 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#920090]"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#520051] px-4 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#920090] cursor-pointer"
           >
             <Plus size={16} /> Issue Custom Certificate
           </button>
@@ -87,19 +164,28 @@ export default function AdminCertificatesPage() {
             />
             <button
               type="submit"
-              className="rounded-xl bg-white px-5 py-2.5 text-xs font-bold text-[#520051] hover:bg-purple-50"
+              className="rounded-xl bg-white px-5 py-2.5 text-xs font-bold text-[#520051] hover:bg-purple-50 cursor-pointer"
             >
               Verify Hash
             </button>
           </form>
 
           {verifyResult && verifyResult !== "not_found" && (
-            <div className="mt-4 flex items-center gap-3 rounded-xl bg-emerald-500/20 p-3 backdrop-blur-xs border border-emerald-400/40 text-xs font-semibold">
-              <CheckCircle2 size={16} className="text-emerald-300" />
-              <span>
-                VALID CERTIFICATE: Issued to <strong>{verifyResult.recipientName}</strong> for &quot;
-                {verifyResult.courseTitle}&quot; on {verifyResult.issueDate}. Grade: {verifyResult.grade}.
-              </span>
+            <div className="mt-4 flex items-center justify-between gap-3 rounded-xl bg-emerald-500/20 p-3 backdrop-blur-xs border border-emerald-400/40 text-xs font-semibold">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 size={16} className="text-emerald-300 shrink-0" />
+                <span>
+                  VALID CERTIFICATE: Issued to <strong>{verifyResult.recipientName}</strong> for &quot;
+                  {verifyResult.courseTitle}&quot; on {verifyResult.issueDate}. Grade: {verifyResult.grade}.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedPreviewCert(verifyResult)}
+                className="shrink-0 rounded-lg bg-white px-3 py-1 text-xs font-bold text-[#520051]"
+              >
+                View Certificate
+              </button>
             </div>
           )}
 
@@ -119,13 +205,13 @@ export default function AdminCertificatesPage() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search certificate hash, recipient name, or course title..."
+              placeholder="Search certificate hash, recipient student name, or course title..."
               className="w-full rounded-xl border border-slate-200 py-2.5 pl-11 pr-4 text-xs outline-none focus:border-[#920090]"
             />
           </div>
         </div>
 
-        {/* Certificates Table / Empty State */}
+        {/* Certificates Table */}
         <div className="mt-6 overflow-hidden rounded-2xl border border-[#eee5ee] bg-white shadow-xs">
           {filteredCertificates.length > 0 ? (
             <div className="overflow-x-auto">
@@ -133,30 +219,41 @@ export default function AdminCertificatesPage() {
                 <thead className="bg-[#faf5fa] text-[11px] font-bold uppercase tracking-wider text-[#520051]">
                   <tr>
                     <th className="px-6 py-4">Verification Hash</th>
-                    <th className="px-6 py-4">Recipient</th>
+                    <th className="px-6 py-4">Enrolled Student Name</th>
                     <th className="px-6 py-4">Course Title</th>
                     <th className="px-6 py-4">Issue Date</th>
                     <th className="px-6 py-4">Grade</th>
-                    <th className="px-6 py-4 text-right">Status</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredCertificates.map((cert) => (
-                    <tr key={cert.id} className="hover:bg-slate-50 transition">
+                    <tr
+                      key={cert.id}
+                      onClick={() => setSelectedPreviewCert(cert)}
+                      className="hover:bg-purple-50/50 transition cursor-pointer"
+                    >
                       <td className="px-6 py-4 font-mono text-xs font-bold text-[#920090]">
                         {cert.certificateHash}
                       </td>
                       <td className="px-6 py-4">
                         <p className="font-bold text-slate-800">{cert.recipientName}</p>
-                        <p className="text-xs text-slate-400">{cert.recipientEmail}</p>
+                        <p className="text-[11px] text-slate-400">{cert.recipientEmail}</p>
                       </td>
-                      <td className="px-6 py-4 font-medium text-slate-700">{cert.courseTitle}</td>
+                      <td className="px-6 py-4 font-bold text-[#520051]">{cert.courseTitle}</td>
                       <td className="px-6 py-4 text-xs text-slate-500">{cert.issueDate}</td>
                       <td className="px-6 py-4 font-semibold text-emerald-600">{cert.grade}</td>
                       <td className="px-6 py-4 text-right">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-                          <CheckCircle2 size={12} /> Valid
-                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedPreviewCert(cert);
+                          }}
+                          className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-[#520051] hover:bg-[#fde8fc] hover:border-[#920090]"
+                        >
+                          <Eye size={14} /> View Certificate
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -168,9 +265,9 @@ export default function AdminCertificatesPage() {
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#faf5fa] text-[#520051]">
                 <FileCheck size={24} />
               </div>
-              <h3 className="mt-4 text-base font-bold text-[#520051]">No Certificates Issued Yet</h3>
+              <h3 className="mt-4 text-base font-bold text-[#520051]">No Certificates Found</h3>
               <p className="mt-1 text-xs text-slate-500">
-                Certificates will appear automatically when learners complete course requirements.
+                Issue a custom certificate using the button above.
               </p>
             </div>
           )}
@@ -181,7 +278,7 @@ export default function AdminCertificatesPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs">
             <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 className="text-lg font-bold text-[#520051]">Issue Manual Certificate</h3>
+                <h3 className="text-lg font-bold text-[#520051]">Issue Official Certificate</h3>
                 <button
                   type="button"
                   onClick={() => setShowIssueModal(false)}
@@ -191,38 +288,36 @@ export default function AdminCertificatesPage() {
                 </button>
               </div>
 
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  alert("Certificate generated and issued to recipient!");
-                  setShowIssueModal(false);
-                }}
-                className="mt-4 space-y-3"
-              >
+              <form onSubmit={handleIssueCertificate} className="mt-4 space-y-3">
                 <div>
-                  <label className="text-xs font-semibold text-slate-600">Recipient Name</label>
+                  <label className="text-xs font-bold text-slate-700">Enrolled Student Full Name</label>
                   <input
                     required
                     type="text"
-                    placeholder="e.g. Alex Rivera"
+                    value={newRecipientName}
+                    onChange={(e) => setNewRecipientName(e.target.value)}
+                    placeholder="e.g. Jordan Diaz or Kavini Gavesha"
                     className="w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none focus:border-[#920090]"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-600">Recipient Email</label>
+                  <label className="text-xs font-bold text-slate-700">Student Email Address</label>
                   <input
-                    required
                     type="email"
-                    placeholder="e.g. alex@example.com"
+                    value={newRecipientEmail}
+                    onChange={(e) => setNewRecipientEmail(e.target.value)}
+                    placeholder="e.g. student@unigap.edu"
                     className="w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none focus:border-[#920090]"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-600">Course Title</label>
+                  <label className="text-xs font-bold text-slate-700">Course Title</label>
                   <input
                     required
                     type="text"
-                    placeholder="e.g. Next.js App Router Architecture"
+                    value={newCourseTitle}
+                    onChange={(e) => setNewCourseTitle(e.target.value)}
+                    placeholder="e.g. JavaScript & TypeScript Mastery 2026"
                     className="w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none focus:border-[#920090]"
                   />
                 </div>
@@ -230,13 +325,13 @@ export default function AdminCertificatesPage() {
                   <button
                     type="button"
                     onClick={() => setShowIssueModal(false)}
-                    className="w-1/2 rounded-xl border border-slate-200 py-2.5 text-xs font-semibold text-slate-600"
+                    className="w-1/2 rounded-xl border border-slate-200 py-2.5 text-xs font-semibold text-slate-600 cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="w-1/2 rounded-xl bg-[#520051] py-2.5 text-xs font-semibold text-white hover:bg-[#920090]"
+                    className="w-1/2 rounded-xl bg-[#520051] py-2.5 text-xs font-semibold text-white hover:bg-[#920090] cursor-pointer shadow-md"
                   >
                     Issue Certificate
                   </button>
@@ -245,6 +340,12 @@ export default function AdminCertificatesPage() {
             </div>
           </div>
         )}
+
+        {/* Certificate Modal View */}
+        <CertificateModal
+          certificate={selectedPreviewCert}
+          onClose={() => setSelectedPreviewCert(null)}
+        />
       </main>
     </AdminShell>
   );

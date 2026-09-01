@@ -4,10 +4,20 @@ export interface Instructor {
   id: string;
   name: string;
   title: string;
+  bio?: string;
   avatarColor: string;
   rating: number;
   courses: number;
   learners: number;
+}
+
+export interface QuizQuestionItem {
+  id?: string | number;
+  question: string;
+  options: string[];
+  correctIndex: number;
+  explanation?: string;
+  points?: number;
 }
 
 export interface LessonRef {
@@ -15,6 +25,13 @@ export interface LessonRef {
   title: string;
   durationMin: number;
   type: "video" | "reading" | "quiz";
+  videoUrl?: string;
+  readingBody?: string;
+  attachmentUrl?: string;
+  quizQuestion?: string;
+  quizOptions?: string[];
+  quizCorrectIndex?: number;
+  quizQuestions?: QuizQuestionItem[];
   completed: boolean;
   locked: boolean;
 }
@@ -46,6 +63,7 @@ export interface Course {
   requirements: string[];
   status?: "Published" | "Draft";
   isPublished?: boolean;
+  thumbnailUrl?: string | null;
   enrolled?: boolean;
   progress?: number; // 0-100
   currentLesson?: string;

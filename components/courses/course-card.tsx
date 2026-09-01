@@ -49,26 +49,28 @@ export function CourseCard({ course }: { course: Course }) {
 
   return (
     <Link href={`/courses/${course.slug}`} onClick={handleCardClick} className="group block h-full">
-      <Card className="flex h-full flex-col overflow-hidden rounded-[4px] border border-border bg-surface transition-all duration-200 hover:-translate-y-1 hover:border-border-hover hover:shadow-xl">
-        <CourseThumb category={course.category} gradient={course.gradient} className="h-36 w-full" />
+      <Card className="flex h-full flex-col overflow-hidden rounded-2xl border border-[#eee5ee] bg-white transition-all duration-200 hover:-translate-y-1 hover:border-[#920090]/40 hover:shadow-xl shadow-xs">
+        <CourseThumb category={course.category} gradient={course.gradient} thumbnailUrl={course.thumbnailUrl} className="h-36 w-full" />
         <div className="flex flex-1 flex-col p-5">
           <div className="flex items-center justify-between gap-2">
-            <Badge variant="default">{course.category}</Badge>
+            <span className="rounded-full bg-purple-50 px-2.5 py-0.5 text-[10px] font-bold text-[#920090] border border-purple-100">
+              {course.category}
+            </span>
             {course.isFree ? (
-              <Badge variant="moss">Free</Badge>
+              <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700">Free</span>
             ) : (
-              <Badge variant="brass">${course.price}</Badge>
+              <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold text-amber-800">${course.price}</span>
             )}
           </div>
 
-          <h3 className="mt-3 line-clamp-2 font-serif text-base font-medium text-ink transition-colors group-hover:text-primary">
+          <h3 className="mt-3 line-clamp-2 text-base font-bold text-[#520051] transition-colors group-hover:text-[#920090]">
             {course.title}
           </h3>
-          <p className="mt-1 text-xs text-ink-muted">{instructorDisplayName}</p>
+          <p className="mt-1 text-xs text-slate-500 font-medium">{instructorDisplayName}</p>
 
-          <div className="mt-4 flex items-center gap-3.5 text-xs font-mono text-ink-muted">
-            <span className="flex items-center gap-1">
-              <Star size={13} className="fill-primary text-primary" /> {course.rating || 0}
+          <div className="mt-4 flex items-center gap-3.5 text-xs font-mono text-slate-500">
+            <span className="flex items-center gap-1 font-bold text-amber-600">
+              <Star size={13} className="fill-amber-400 text-amber-400" /> {course.rating || 0}
             </span>
             <span className="flex items-center gap-1">
               <Users size={13} /> {(course.learners || 0).toLocaleString()}
@@ -82,27 +84,27 @@ export function CourseCard({ course }: { course: Course }) {
             {enrolledState ? (
               <div>
                 <div className="mb-2 flex items-center justify-between text-xs font-mono">
-                  <span className="inline-flex items-center gap-1 font-semibold text-accent">
+                  <span className="inline-flex items-center gap-1 font-semibold text-emerald-600">
                     <CheckCircle2 size={13} /> Enrolled
                   </span>
-                  <span className="font-semibold text-primary">{course.progress || 0}%</span>
+                  <span className="font-semibold text-[#920090]">{course.progress || 0}%</span>
                 </div>
                 <Progress value={course.progress || 0} />
                 <div className="mt-3 flex justify-end">
-                  <span className="inline-flex items-center gap-1 text-xs font-medium text-primary group-hover:underline">
+                  <span className="inline-flex items-center gap-1 text-xs font-bold text-[#520051] group-hover:text-[#920090] group-hover:underline">
                     <PlayCircle size={14} /> Continue Learning →
                   </span>
                 </div>
               </div>
             ) : (
-              <div className="flex items-center justify-between gap-2 border-t border-border pt-3">
-                <span className="font-mono text-sm font-semibold text-ink">
+              <div className="flex items-center justify-between gap-2 border-t border-[#eee5ee] pt-3">
+                <span className="font-mono text-sm font-bold text-[#520051]">
                   {course.isFree ? "Free Access" : `$${course.price}`}
                 </span>
                 <button
                   type="button"
                   onClick={handleEnrollClick}
-                  className="rounded-[4px] bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-fg transition hover:opacity-90 active:scale-95 flex items-center gap-1 shadow-sm"
+                  className="rounded-xl bg-[#520051] px-4 py-1.5 text-xs font-bold text-white transition hover:bg-[#920090] active:scale-95 flex items-center gap-1 shadow-xs cursor-pointer"
                 >
                   Enroll Now
                 </button>

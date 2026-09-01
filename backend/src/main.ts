@@ -1,7 +1,6 @@
 import 'dotenv/config';
 
-process.env.DATABASE_URL = 'postgresql://postgres:Kavini%40123*@127.0.0.1:5433/unigap';
-process.env.PRISMA_DATABASE_URL = process.env.DATABASE_URL;
+
 
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';

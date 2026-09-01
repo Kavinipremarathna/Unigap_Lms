@@ -30,14 +30,41 @@ export default function AdminInstructorsPage() {
   const [instructorsList, setInstructorsList] = useState<Instructor[]>([]);
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingInstructor, setEditingInstructor] = useState<Instructor | null>(null);
+  const [loading, setLoading] = useState(true);
 
   // Form State
   const [name, setName] = useState("");
   const [title, setTitle] = useState("");
+  const [bio, setBio] = useState("");
   const [avatarColor, setAvatarColor] = useState("from-purple-500 to-indigo-500");
 
-  const loadInstructors = () => {
+  const loadInstructors = async () => {
+    try {
+      const res = await fetch("/api/admin/instructors");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.instructors)) {
+          const mapped: Instructor[] = data.instructors.map((i: any) => ({
+            id: i.id,
+            name: i.name,
+            title: i.title || "Subject Specialist",
+            bio: i.bio || "Lead Educator & Subject Specialist at UNIGAP",
+            avatarColor: i.avatar || "from-purple-500 to-indigo-500",
+            rating: typeof i.rating === "number" ? i.rating : 5.0,
+            courses: i.coursesCount || 0,
+            learners: i.studentsCount || 0,
+          }));
+          setInstructorsList(mapped);
+          setLoading(false);
+          return;
+        }
+      }
+    } catch {
+      // fallback to local stored
+    }
     setInstructorsList(getStoredInstructors());
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -49,39 +76,164 @@ export default function AdminInstructorsPage() {
   const filtered = instructorsList.filter(
     (ins) =>
       ins.name.toLowerCase().includes(search.toLowerCase()) ||
-      ins.title.toLowerCase().includes(search.toLowerCase())
+      ins.title.toLowerCase().includes(search.toLowerCase()) ||
+      (ins.bio && ins.bio.toLowerCase().includes(search.toLowerCase()))
   );
 
-  const handleCreateInstructor = (e: React.FormEvent) => {
+  const openAddModal = () => {
+    setEditingInstructor(null);
+    setName("");
+    setTitle("");
+    setBio("");
+    setAvatarColor("from-purple-500 to-indigo-500");
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (ins: Instructor) => {
+    setEditingInstructor(ins);
+    setName(ins.name);
+    setTitle(ins.title);
+    setBio(ins.bio || "");
+    setAvatarColor(ins.avatarColor || "from-purple-500 to-indigo-500");
+    setIsModalOpen(true);
+  };
+
+  const handleSaveInstructor = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
       alert("Please enter instructor name.");
       return;
     }
 
-    const newIns: Instructor = {
+    if (editingInstructor) {
+      // EDIT INSTRUCTOR (PATCH)
+      try {
+        const res = await fetch("/api/admin/instructors", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: editingInstructor.id,
+            name: name.trim(),
+            title: title.trim() || "Course Instructor & Subject Specialist",
+            bio: bio.trim() || "Lead Educator at UNIGAP",
+            avatar: avatarColor,
+          }),
+        });
+
+        if (res.ok) {
+          const updatedIns: Instructor = {
+            ...editingInstructor,
+            name: name.trim(),
+            title: title.trim() || "Course Instructor & Subject Specialist",
+            bio: bio.trim() || "Lead Educator at UNIGAP",
+            avatarColor: avatarColor,
+          };
+          saveCustomInstructor(updatedIns);
+          await loadInstructors();
+          addActivity("Updated Instructor", `Edited instructor: ${name}`);
+          alert(`Instructor "${name}" updated in PostgreSQL database!`);
+          setIsModalOpen(false);
+          setEditingInstructor(null);
+          return;
+        }
+      } catch (err) {
+        console.error("Update instructor error:", err);
+      }
+
+      // Fallback local edit
+      const fallbackEdit: Instructor = {
+        ...editingInstructor,
+        name: name.trim(),
+        title: title.trim() || "Course Instructor & Subject Specialist",
+        bio: bio.trim() || "Lead Educator at UNIGAP",
+        avatarColor: avatarColor,
+      };
+      saveCustomInstructor(fallbackEdit);
+      loadInstructors();
+      alert(`Instructor "${name}" updated!`);
+      setIsModalOpen(false);
+      setEditingInstructor(null);
+      return;
+    }
+
+    // CREATE NEW INSTRUCTOR (POST)
+    const newInsData = {
+      name: name.trim(),
+      email: `${name.toLowerCase().replace(/[^a-z0-9]/g, ".")}@unigap.edu`,
+      title: title.trim() || "Course Instructor & Subject Specialist",
+      bio: bio.trim() || "Lead Educator at UNIGAP",
+      avatar: avatarColor,
+    };
+
+    try {
+      const res = await fetch("/api/admin/instructors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newInsData),
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        const createdIns: Instructor = {
+          id: result.instructor.id,
+          name: result.instructor.name,
+          title: result.instructor.title,
+          bio: result.instructor.bio,
+          avatarColor: avatarColor,
+          rating: 5.0,
+          courses: 0,
+          learners: 0,
+        };
+        saveCustomInstructor(createdIns);
+        await loadInstructors();
+        addActivity("Created Instructor", `Added instructor: ${name}`);
+        alert(`Instructor "${name}" saved to PostgreSQL database!`);
+
+        // Reset & close
+        setName("");
+        setTitle("");
+        setBio("");
+        setIsModalOpen(false);
+        return;
+      }
+    } catch (err) {
+      console.error("Save instructor error:", err);
+    }
+
+    // Fallback local save
+    const fallbackIns: Instructor = {
       id: `ins-${Date.now()}`,
       name: name.trim(),
       title: title.trim() || "Course Instructor & Subject Specialist",
+      bio: bio.trim() || "Lead Educator at UNIGAP",
       avatarColor: avatarColor,
-      rating: 0,
+      rating: 5.0,
       courses: 0,
       learners: 0,
     };
-
-    saveCustomInstructor(newIns);
+    saveCustomInstructor(fallbackIns);
+    loadInstructors();
     addActivity("Created Instructor", `Added instructor: ${name}`);
-    alert(`Instructor "${name}" added successfully!`);
+    alert(`Instructor "${name}" added!`);
 
-    // Reset & close
     setName("");
     setTitle("");
+    setBio("");
     setIsModalOpen(false);
   };
 
-  const handleDelete = (id: string, insName: string) => {
+  const handleDelete = async (id: string, insName: string) => {
     if (confirm(`Are you sure you want to remove instructor "${insName}"?`)) {
+      try {
+        await fetch(`/api/admin/instructors?id=${id}`, {
+          method: "DELETE",
+        });
+      } catch (err) {
+        console.error("Delete instructor error:", err);
+      }
+
       deleteStoredInstructor(id);
+      await loadInstructors();
       addActivity("Deleted Instructor", `Removed instructor: ${insName}`);
     }
   };
@@ -109,8 +261,8 @@ export default function AdminInstructorsPage() {
 
           <button
             type="button"
-            onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#520051] to-[#920090] px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-95"
+            onClick={openAddModal}
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#520051] to-[#920090] px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-95 cursor-pointer"
           >
             <Plus size={18} /> Add New Instructor
           </button>
@@ -123,7 +275,7 @@ export default function AdminInstructorsPage() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search instructors by name or title..."
+              placeholder="Search instructors by name, title, or bio..."
               className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-[#920090] focus:ring-4 focus:ring-[#920090]/10"
             />
           </div>
@@ -145,7 +297,7 @@ export default function AdminInstructorsPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <div
-                        className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${ins.avatarColor} text-base font-extrabold text-white shadow-xs`}
+                        className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${ins.avatarColor || "from-purple-500 to-indigo-500"} text-base font-extrabold text-white shadow-xs`}
                       >
                         {ins.name
                           .split(" ")
@@ -156,21 +308,37 @@ export default function AdminInstructorsPage() {
                         <h3 className="font-bold text-[#520051] group-hover:text-[#920090]">
                           {ins.name}
                         </h3>
-                        <p className="mt-0.5 text-xs text-slate-500">{ins.title}</p>
+                        <p className="mt-0.5 text-xs font-semibold text-[#920090]">{ins.title}</p>
                       </div>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(ins.id, ins.name)}
-                      className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500 transition"
-                      title="Remove instructor"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => openEditModal(ins)}
+                        className="rounded-lg p-1.5 text-slate-400 hover:bg-purple-50 hover:text-[#920090] transition cursor-pointer"
+                        title="Edit instructor"
+                      >
+                        <Edit size={16} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(ins.id, ins.name)}
+                        className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500 transition cursor-pointer"
+                        title="Remove instructor"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="mt-5 grid grid-cols-3 gap-2 rounded-xl bg-[#faf5fa] p-3 text-center text-xs">
+                  {/* Instructor Bio Snippet */}
+                  <p className="mt-3 text-xs text-slate-500 line-clamp-2 leading-relaxed italic bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                    &quot;{ins.bio || "Lead Educator & Subject Specialist at UNIGAP"}&quot;
+                  </p>
+
+                  <div className="mt-4 grid grid-cols-3 gap-2 rounded-xl bg-[#faf5fa] p-3 text-center text-xs">
                     <div>
                       <span className="block font-extrabold text-[#520051]">
                         {ins.courses || 0}
@@ -185,7 +353,7 @@ export default function AdminInstructorsPage() {
                     </div>
                     <div>
                       <span className="block font-extrabold text-[#520051]">
-                        {ins.rating ? `★ ${ins.rating}` : "New"}
+                        {ins.rating ? `★ ${ins.rating}` : "5.0"}
                       </span>
                       <span className="text-[10px] text-slate-500">Rating</span>
                     </div>
@@ -215,87 +383,89 @@ export default function AdminInstructorsPage() {
           </div>
         )}
 
-        {/* Modal for Adding Instructor */}
+        {/* Modal for Adding / Editing Instructor */}
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
             <div className="w-full max-w-md rounded-3xl border border-[#eee5ee] bg-white p-6 shadow-2xl animate-in fade-in zoom-in duration-150">
               <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                 <div className="flex items-center gap-2 text-[#520051]">
                   <Sparkles size={20} className="text-[#920090]" />
-                  <h3 className="text-lg font-extrabold">Add New Instructor</h3>
+                  <h3 className="text-lg font-extrabold">
+                    {editingInstructor ? "Edit Instructor" : "Add New Instructor"}
+                  </h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                  className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition cursor-pointer"
                 >
-                  <X size={20} />
+                  <X size={18} />
                 </button>
               </div>
 
-              <form onSubmit={handleCreateInstructor} className="mt-5 space-y-4">
+              <form onSubmit={handleSaveInstructor} className="mt-5 space-y-4">
                 <div>
-                  <label className="mb-1.5 block text-xs font-bold text-[#520051]">
-                    Full Name *
-                  </label>
+                  <label className="block text-xs font-bold text-[#520051]">Full Name *</label>
                   <input
+                    type="text"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. Dr. Sarah Chen"
-                    className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-[#920090] focus:ring-4 focus:ring-[#920090]/10"
+                    placeholder="e.g. Dr. Sarah Jenkins"
+                    className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm outline-none focus:border-[#920090] focus:ring-4 focus:ring-[#920090]/10"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-1.5 block text-xs font-bold text-[#520051]">
-                    Professional Title & Expertise *
-                  </label>
+                  <label className="block text-xs font-bold text-[#520051]">Title & Role</label>
                   <input
-                    required
+                    type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g. Lead AI Specialist & Machine Learning Researcher"
-                    className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-[#920090] focus:ring-4 focus:ring-[#920090]/10"
+                    placeholder="e.g. Senior Fullstack Educator"
+                    className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm outline-none focus:border-[#920090] focus:ring-4 focus:ring-[#920090]/10"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-1.5 block text-xs font-bold text-[#520051]">
-                    Avatar Color Theme
-                  </label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {[
-                      { name: "Purple", val: "from-purple-500 to-indigo-500" },
-                      { name: "Cyan", val: "from-cyan-500 to-blue-500" },
-                      { name: "Emerald", val: "from-emerald-500 to-teal-500" },
-                      { name: "Rose", val: "from-pink-500 to-rose-500" },
-                    ].map((c) => (
-                      <button
-                        key={c.val}
-                        type="button"
-                        onClick={() => setAvatarColor(c.val)}
-                        className={`h-9 rounded-xl bg-gradient-to-br ${c.val} border-2 transition ${
-                          avatarColor === c.val ? "border-[#520051] scale-105" : "border-transparent"
-                        }`}
-                      />
-                    ))}
-                  </div>
+                  <label className="block text-xs font-bold text-[#520051]">Instructor Bio / Background</label>
+                  <textarea
+                    rows={3}
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    placeholder="Brief bio describing teaching experience, research, and technical specialization..."
+                    className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs outline-none focus:border-[#920090] focus:ring-4 focus:ring-[#920090]/10"
+                  />
                 </div>
 
-                <div className="mt-6 flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <div>
+                  <label className="block text-xs font-bold text-[#520051]">Avatar Gradient Theme</label>
+                  <select
+                    value={avatarColor}
+                    onChange={(e) => setAvatarColor(e.target.value)}
+                    className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm outline-none focus:border-[#920090]"
+                  >
+                    <option value="from-purple-500 to-indigo-500">Purple Gradient</option>
+                    <option value="from-pink-500 to-[#920090]">Pink & Royal Purple</option>
+                    <option value="from-emerald-500 to-teal-600">Emerald Green</option>
+                    <option value="from-amber-500 to-orange-600">Amber Gold</option>
+                    <option value="from-blue-600 to-indigo-700">Royal Blue</option>
+                  </select>
+                </div>
+
+                <div className="pt-4 flex items-center justify-end gap-2.5">
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                    className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="rounded-xl bg-[#520051] px-5 py-2 text-xs font-bold text-white hover:bg-[#920090]"
+                    className="rounded-xl bg-[#520051] px-5 py-2 text-xs font-bold text-white shadow-md hover:bg-[#920090] transition cursor-pointer"
                   >
-                    Save Instructor
+                    {editingInstructor ? "Save Changes" : "Create Instructor"}
                   </button>
                 </div>
               </form>

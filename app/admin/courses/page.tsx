@@ -22,7 +22,8 @@ import { getEnrolledUserCourses } from "@/lib/services/user-progress";
 type CourseStatus = "Published" | "Draft";
 
 type Course = {
-  id: number;
+  id: string | number;
+  slug?: string;
   title: string;
   description: string;
   instructor: string;
@@ -46,7 +47,35 @@ export default function AdminCoursesPage() {
   const [level, setLevel] = useState<"All" | Course["level"]>("All");
 
   useEffect(() => {
-    const loadCourses = () => {
+    const loadCourses = async () => {
+      try {
+        const res = await fetch("/api/admin/courses");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.courses)) {
+            const mapped: Course[] = data.courses.map((c: any) => ({
+              id: c.id,
+              slug: c.slug,
+              title: c.title,
+              description: c.description || c.shortDescription,
+              instructor: c.instructorName || "Unassigned",
+              category: c.category,
+              level: c.level || "Beginner",
+              students: c.studentsCount || 0,
+              rating: typeof c.rating === "number" ? c.rating : 5.0,
+              price: Number(c.price) || 0,
+              status: c.status === "Draft" || c.isPublished === false ? "Draft" : "Published",
+              lessons: c.lessonsCount || 0,
+              duration: `${c.durationHours || 0}h`,
+            }));
+            setCourses(mapped);
+            return;
+          }
+        }
+      } catch (err) {
+        console.error("Fetch courses error:", err);
+      }
+
       const stored = getStoredCourses();
       const realEnrolledCourses = getEnrolledUserCourses();
       const availableInstructors = getStoredInstructors();
@@ -127,7 +156,7 @@ export default function AdminCoursesPage() {
     });
   }, [courses, query, status, category, level]);
 
-  const togglePublish = (id: number) => {
+  const togglePublish = async (id: string | number) => {
     const target = courses.find((c) => c.id === id);
     if (!target) return;
     const nextStatus: CourseStatus = target.status === "Published" ? "Draft" : "Published";
@@ -143,11 +172,19 @@ export default function AdminCoursesPage() {
       )
     );
 
+    try {
+      await fetch("/api/admin/courses", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status: nextStatus }),
+      });
+    } catch (e) {
+      console.error("Toggle publish API error:", e);
+    }
+
     const storedList = getStoredCourses();
-    const targetIndex = id - 1;
     const match =
-      storedList.find((c) => c.title.toLowerCase().trim() === target.title.toLowerCase().trim()) ||
-      storedList[targetIndex];
+      storedList.find((c) => c.id === id || c.title.toLowerCase().trim() === target.title.toLowerCase().trim());
 
     if (match) {
       saveCustomCourse({
@@ -158,15 +195,23 @@ export default function AdminCoursesPage() {
     }
   };
 
-  const deleteCourse = (id: number) => {
+  const deleteCourse = async (id: string | number) => {
     const course = courses.find((item) => item.id === id);
     if (!course) return;
 
     const confirmed = window.confirm(`Delete "${course.title}"? This action cannot be undone.`);
     if (!confirmed) return;
 
+    try {
+      await fetch(`/api/admin/courses?id=${id}`, {
+        method: "DELETE",
+      });
+    } catch (e) {
+      console.error("Delete course API error:", e);
+    }
+
     const storedList = getStoredCourses();
-    const match = storedList.find((c, i) => i === id - 1 || c.title === course.title);
+    const match = storedList.find((c) => c.id === id || c.title === course.title);
     if (match) {
       deleteStoredCourse(match.id);
       deleteStoredCourse(match.slug);

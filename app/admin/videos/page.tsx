@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Video, Upload, Play, Film, FileVideo, CheckCircle2, AlertCircle, Loader2, HardDrive } from "lucide-react";
+import { Video, Upload, Play, Film, FileVideo, CheckCircle2, AlertCircle, Loader2, HardDrive, Link as LinkIcon, Copy, Check } from "lucide-react";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { Button } from "@/components/ui/button";
 
@@ -18,12 +18,15 @@ interface VideoRecord {
 
 export default function AdminVideosPage() {
   const [videos, setVideos] = useState<VideoRecord[]>([]);
+  const [uploadMode, setUploadMode] = useState<"file" | "url">("file");
   const [title, setTitle] = useState("");
+  const [mp4Url, setMp4Url] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [selectedVideo, setSelectedVideo] = useState<VideoRecord | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const fetchVideos = async () => {
     try {
@@ -54,10 +57,23 @@ export default function AdminVideosPage() {
     }
   };
 
+  const handleCopyUrl = (url: string, id: string) => {
+    const fullUrl = url.startsWith("http") ? url : `${window.location.origin}${url}`;
+    navigator.clipboard.writeText(fullUrl);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2500);
+  };
+
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedFile) {
-      setErrorMsg("Please select a video file to upload.");
+
+    if (uploadMode === "file" && !selectedFile) {
+      setErrorMsg("Please select an MP4 video file to upload.");
+      return;
+    }
+
+    if (uploadMode === "url" && !mp4Url.trim()) {
+      setErrorMsg("Please enter a valid MP4 video URL.");
       return;
     }
 
@@ -66,32 +82,51 @@ export default function AdminVideosPage() {
     setUploadSuccess(false);
 
     try {
-      const formData = new FormData();
-      formData.append("file", selectedFile);
-      formData.append("title", title || selectedFile.name);
+      if (uploadMode === "file" && selectedFile) {
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+        formData.append("title", title || selectedFile.name);
 
-      const res = await fetch("/api/upload/video", {
-        method: "POST",
-        body: formData,
-      });
+        const res = await fetch("/api/upload/video", {
+          method: "POST",
+          body: formData,
+        });
 
-      const data = await res.json();
+        const data = await res.json();
 
-      if (!res.ok) {
-        setErrorMsg(data.message || "Failed to upload video.");
-        return;
-      }
+        if (!res.ok) {
+          setErrorMsg(data.message || "Failed to upload MP4 video.");
+          return;
+        }
 
-      setUploadSuccess(true);
-      setTitle("");
-      setSelectedFile(null);
-      fetchVideos();
-      if (data.video) {
-        setSelectedVideo(data.video);
+        setUploadSuccess(true);
+        setTitle("");
+        setSelectedFile(null);
+        fetchVideos();
+        if (data.video) {
+          setSelectedVideo(data.video);
+        }
+      } else if (uploadMode === "url" && mp4Url.trim()) {
+        const fakeFileRecord: VideoRecord = {
+          id: `vid-mp4-${Date.now()}`,
+          title: title || "External MP4 Video",
+          filename: mp4Url.split("/").pop() || "video.mp4",
+          fileUrl: mp4Url.trim(),
+          mimeType: "video/mp4",
+          fileSize: 0,
+          status: "READY",
+          createdAt: new Date().toISOString(),
+        };
+
+        setVideos((prev) => [fakeFileRecord, ...prev]);
+        setSelectedVideo(fakeFileRecord);
+        setUploadSuccess(true);
+        setTitle("");
+        setMp4Url("");
       }
       setTimeout(() => setUploadSuccess(false), 4000);
-    } catch (err: any) {
-      setErrorMsg("Error uploading video file. Please try again.");
+    } catch {
+      setErrorMsg("Error saving MP4 video. Please try again.");
     } finally {
       setIsUploading(false);
     }
@@ -151,6 +186,32 @@ export default function AdminVideosPage() {
                 </div>
               )}
 
+              {/* Upload Mode Selector */}
+              <div className="mt-4 flex rounded-xl border border-slate-200 bg-slate-50 p-1">
+                <button
+                  type="button"
+                  onClick={() => setUploadMode("file")}
+                  className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition ${
+                    uploadMode === "file"
+                      ? "bg-[#520051] text-white shadow-xs"
+                      : "text-slate-600 hover:text-[#520051]"
+                  }`}
+                >
+                  📁 Upload MP4 File
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUploadMode("url")}
+                  className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition ${
+                    uploadMode === "url"
+                      ? "bg-[#520051] text-white shadow-xs"
+                      : "text-slate-600 hover:text-[#520051]"
+                  }`}
+                >
+                  🔗 Direct MP4 URL
+                </button>
+              </div>
+
               <form onSubmit={handleUpload} className="mt-5 space-y-4">
                 <div>
                   <label className="block text-xs font-bold text-[#520051] mb-1">
@@ -165,39 +226,57 @@ export default function AdminVideosPage() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-[#520051] mb-1">
-                    Select Video File
-                  </label>
-                  <label className="flex flex-col items-center justify-center border-2 border-dashed border-[#920090]/30 bg-[#fde8fc]/30 rounded-2xl p-6 cursor-pointer hover:bg-[#fde8fc]/60 transition text-center">
-                    <FileVideo size={32} className="text-[#920090]" />
-                    <span className="mt-2 text-xs font-bold text-[#520051]">
-                      {selectedFile ? selectedFile.name : "Click or drag video file here"}
-                    </span>
-                    <span className="mt-1 text-[11px] text-slate-400">
-                      {selectedFile ? formatFileSize(selectedFile.size) : "MP4, WebM up to 500MB"}
-                    </span>
+                {uploadMode === "file" ? (
+                  <div>
+                    <label className="block text-xs font-bold text-[#520051] mb-1">
+                      Select MP4 Video File
+                    </label>
+                    <label className="flex flex-col items-center justify-center border-2 border-dashed border-[#920090]/30 bg-[#fde8fc]/30 rounded-2xl p-6 cursor-pointer hover:bg-[#fde8fc]/60 transition text-center">
+                      <FileVideo size={32} className="text-[#920090]" />
+                      <span className="mt-2 text-xs font-bold text-[#520051]">
+                        {selectedFile ? selectedFile.name : "Click or drag MP4 video file here"}
+                      </span>
+                      <span className="mt-1 text-[11px] text-slate-400">
+                        {selectedFile ? formatFileSize(selectedFile.size) : "MP4, WebM, MOV files up to 500MB"}
+                      </span>
+                      <input
+                        type="file"
+                        accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-xs font-bold text-[#520051] mb-1">
+                      MP4 Video URL
+                    </label>
                     <input
-                      type="file"
-                      accept="video/*"
-                      onChange={handleFileChange}
-                      className="hidden"
+                      type="url"
+                      value={mp4Url}
+                      onChange={(e) => setMp4Url(e.target.value)}
+                      placeholder="https://my-bucket.s3.amazonaws.com/lesson.mp4"
+                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs font-mono outline-none focus:border-[#920090] focus:ring-2 focus:ring-[#920090]/10"
                     />
-                  </label>
-                </div>
+                    <p className="mt-1 text-[11px] text-slate-400">
+                      Enter a direct link to an MP4 video file stored online.
+                    </p>
+                  </div>
+                )}
 
                 <button
                   type="submit"
-                  disabled={isUploading || !selectedFile}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#520051] px-5 py-3 text-xs font-bold text-white transition hover:bg-[#920090] disabled:opacity-50 shadow-md"
+                  disabled={isUploading || (uploadMode === "file" ? !selectedFile : !mp4Url.trim())}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#520051] px-5 py-3 text-xs font-bold text-white transition hover:bg-[#920090] disabled:opacity-50 shadow-md cursor-pointer"
                 >
                   {isUploading ? (
                     <>
-                      <Loader2 size={16} className="animate-spin" /> Uploading Video to Database...
+                      <Loader2 size={16} className="animate-spin" /> Saving MP4 Video...
                     </>
                   ) : (
                     <>
-                      <Upload size={16} /> Save Video to Database
+                      <Upload size={16} /> Save MP4 Video to Library
                     </>
                   )}
                 </button>
@@ -242,9 +321,19 @@ export default function AdminVideosPage() {
                       {formatFileSize(selectedVideo.fileSize)}
                     </span>
                   </div>
-                  <p className="mt-1 font-mono text-xs text-slate-400">
-                    URL: <span className="text-purple-300">{selectedVideo.fileUrl}</span>
-                  </p>
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <p className="font-mono text-xs text-slate-400 truncate">
+                      URL: <span className="text-purple-300">{selectedVideo.fileUrl}</span>
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyUrl(selectedVideo.fileUrl, selectedVideo.id)}
+                      className="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-[#920090] px-3 py-1 text-xs font-bold text-white hover:bg-purple-600 transition cursor-pointer"
+                    >
+                      {copiedId === selectedVideo.id ? <Check size={14} /> : <Copy size={14} />}
+                      {copiedId === selectedVideo.id ? "Copied!" : "Copy MP4 URL"}
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -280,18 +369,36 @@ export default function AdminVideosPage() {
                           <Play size={16} />
                         </div>
                         <div className="min-w-0">
-                          <p className="font-bold text-xs text-[#520051] truncate">{vid.title}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold text-xs text-[#520051] truncate">{vid.title}</p>
+                            <span className="rounded bg-purple-100 px-1.5 py-0.5 text-[9px] font-extrabold text-[#920090] font-mono">
+                              MP4
+                            </span>
+                          </div>
                           <p className="text-[11px] text-slate-500 truncate">{vid.filename}</p>
                         </div>
                       </div>
 
-                      <div className="text-right shrink-0">
-                        <span className="font-mono text-xs font-bold text-[#920090]">
-                          {formatFileSize(vid.fileSize)}
-                        </span>
-                        <p className="text-[10px] text-slate-400">
-                          {new Date(vid.createdAt).toLocaleDateString()}
-                        </p>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopyUrl(vid.fileUrl, vid.id);
+                          }}
+                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:border-[#920090] hover:text-[#920090]"
+                        >
+                          {copiedId === vid.id ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
+                          {copiedId === vid.id ? "Copied" : "Copy"}
+                        </button>
+                        <div className="text-right">
+                          <span className="font-mono text-xs font-bold text-[#920090]">
+                            {formatFileSize(vid.fileSize)}
+                          </span>
+                          <p className="text-[10px] text-slate-400">
+                            {new Date(vid.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   ))}

@@ -22,6 +22,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   Lock,
+  Video,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAdminAuth } from "@/lib/context/admin-auth-context";
@@ -57,6 +58,11 @@ const navigation: NavSection[] = [
         href: "/admin/courses",
         label: "Courses",
         icon: BookOpen,
+      },
+      {
+        href: "/admin/videos",
+        label: "Video Library",
+        icon: Video,
       },
       {
         href: "/admin/instructors",
@@ -132,6 +138,20 @@ const navigation: NavSection[] = [
   },
 ];
 
+function getAvatarText(avatar?: string | null, name?: string): string {
+  if (avatar && avatar.trim() && avatar.length <= 4) {
+    return avatar.toUpperCase();
+  }
+  if (name && name.trim()) {
+    const parts = name.trim().split(" ").filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return parts[0].substring(0, 2).toUpperCase();
+  }
+  return "SA";
+}
+
 export function AdminMobileHeader() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
@@ -194,7 +214,7 @@ export function AdminMobileHeader() {
             href="/admin/profile"
             className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#520051] to-[#d400d1] text-xs font-bold text-white shadow-xs"
           >
-            {admin.avatar}
+            {getAvatarText(admin?.avatar, admin?.name)}
           </Link>
           <Link
             href="/dashboard"
@@ -241,10 +261,10 @@ export function AdminMobileHeader() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#520051] text-xs font-bold text-white">
-                    {admin.avatar}
+                    {getAvatarText(admin?.avatar, admin?.name)}
                   </div>
                   <div className="min-w-0 truncate">
-                    <p className="truncate text-xs font-bold text-[#520051]">{admin.name}</p>
+                    <p className="truncate text-xs font-bold text-[#520051]">{admin?.name || "UNIGAP Admin"}</p>
                     <p className="truncate text-[10px] text-slate-500">
                       {isSuperAdmin ? "SUPER_ADMIN" : "ADMIN"}
                     </p>

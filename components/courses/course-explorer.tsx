@@ -35,12 +35,48 @@ export function CourseExplorer({ variant = "public" }: CourseExplorerProps) {
   const [allCourses, setAllCourses] = useState<Course[]>([]);
 
   useEffect(() => {
-    setAllCourses(getStoredCourses());
-    const handleUpdate = () => {
+    const loadCoursesFromDb = async () => {
+      try {
+        const res = await fetch("/api/admin/courses");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.courses)) {
+            const mapped: Course[] = data.courses.map((c: any) => ({
+              id: c.id,
+              slug: c.slug,
+              title: c.title,
+              shortDescription: c.shortDescription || c.description,
+              description: c.description,
+              category: c.category,
+              level: (c.level as Level) || "Beginner",
+              durationHours: c.durationHours || 10,
+              rating: typeof c.rating === "number" ? c.rating : 5.0,
+              reviewCount: 12,
+              learners: c.studentsCount || 0,
+              price: Number(c.price) || 0,
+              isFree: c.isFree,
+              instructorId: c.instructorId,
+              instructorName: c.instructorName,
+              gradient: ["#520051", "#920090"],
+              outcomes: [],
+              requirements: [],
+              status: c.status,
+              isPublished: c.isPublished,
+              thumbnailUrl: c.thumbnailUrl || null,
+            }));
+            setAllCourses(mapped);
+            return;
+          }
+        }
+      } catch (err) {
+        console.error("Fetch courses in CourseExplorer error:", err);
+      }
       setAllCourses(getStoredCourses());
     };
-    window.addEventListener("unigap_courses_updated", handleUpdate);
-    return () => window.removeEventListener("unigap_courses_updated", handleUpdate);
+
+    loadCoursesFromDb();
+    window.addEventListener("unigap_courses_updated", loadCoursesFromDb);
+    return () => window.removeEventListener("unigap_courses_updated", loadCoursesFromDb);
   }, []);
 
   const categories = useMemo(() => {

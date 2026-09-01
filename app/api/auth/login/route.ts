@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const token = createToken({
+    const token = await createToken({
       userId: user.id,
       email: user.email,
       role: user.role,

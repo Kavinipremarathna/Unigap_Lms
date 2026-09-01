@@ -1,37 +1,45 @@
+import 'dotenv/config';
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { prisma } from '../../../lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+
+const dbUrl = process.env.DATABASE_URL;
+
+const adapter = new PrismaPg({ connectionString: dbUrl });
+const prismaInstance = new PrismaClient({ adapter });
 
 @Injectable()
 export class PrismaService implements OnModuleInit, OnModuleDestroy {
   get user() {
-    return prisma.user;
+    return prismaInstance.user;
   }
 
   get course() {
-    return prisma.course;
+    return prismaInstance.course;
   }
 
   get instructor() {
-    return prisma.instructor;
+    return prismaInstance.instructor;
   }
 
   get enrollment() {
-    return prisma.enrollment;
+    return prismaInstance.enrollment;
   }
 
   get certificate() {
-    return prisma.certificate;
+    return prismaInstance.certificate;
   }
 
   get achievement() {
-    return prisma.achievement;
+    return prismaInstance.achievement;
   }
 
   async onModuleInit() {
-    await prisma.$connect();
+    await prismaInstance.$connect();
+    console.log('✅ PrismaService connected to PostgreSQL');
   }
 
   async onModuleDestroy() {
-    await prisma.$disconnect();
+    await prismaInstance.$disconnect();
   }
 }

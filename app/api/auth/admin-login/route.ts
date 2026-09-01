@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     }
 
     // 4. Directly authenticate both SUPER_ADMIN and ADMIN (Email verification bypassed for development)
-    const token = createToken({
+    const token = await createToken({
       userId: user.id,
       email: user.email,
       role: user.role,

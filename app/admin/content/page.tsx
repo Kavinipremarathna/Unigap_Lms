@@ -26,6 +26,10 @@ import {
   Link as LinkIcon,
   X,
   Lock,
+  Monitor,
+  Smartphone,
+  ExternalLink,
+  Bot,
 } from "lucide-react";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { useAdminAuth } from "@/lib/context/admin-auth-context";
@@ -36,12 +40,11 @@ export default function AdminContentManagementPage() {
   const { landing, dashboard, updateLanding, updateDashboard, resetLandingDefaults } =
     useSiteContent();
 
-
-
   const [activeTab, setActiveTab] = useState<"landing" | "dashboard">("landing");
   const [activeSection, setActiveSection] = useState<string>("hero");
   const [savedToast, setSavedToast] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
 
   const [formData, setFormData] = useState(landing);
   const [dashboardFormData, setDashboardFormData] = useState(dashboard);
@@ -989,6 +992,178 @@ export default function AdminContentManagementPage() {
                 </button>
               </div>
             </form>
+          </div>
+        )}
+
+        {/* Live Preview Modal Overlay */}
+        {showPreview && (
+          <div className="fixed inset-0 z-50 flex flex-col bg-slate-900/80 backdrop-blur-md">
+            {/* Modal Header Bar */}
+            <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950 px-6 py-3 text-white shadow-lg">
+              <div className="flex items-center gap-3">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#920090] text-white">
+                  <Eye size={18} />
+                </span>
+                <div>
+                  <h3 className="text-sm font-bold text-white">
+                    Live CMS Preview — {activeTab === "landing" ? "Landing Page" : "Learner Dashboard"}
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    Real-time simulation of live content updates
+                  </p>
+                </div>
+              </div>
+
+              {/* Viewport controls */}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center rounded-xl bg-slate-900 p-1 border border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setPreviewDevice("desktop")}
+                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-semibold transition ${
+                      previewDevice === "desktop"
+                        ? "bg-[#920090] text-white"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <Monitor size={14} /> Desktop
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewDevice("mobile")}
+                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-semibold transition ${
+                      previewDevice === "mobile"
+                        ? "bg-[#920090] text-white"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <Smartphone size={14} /> Mobile
+                  </button>
+                </div>
+
+                <a
+                  href={activeTab === "landing" ? "/" : "/dashboard"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-700 transition"
+                >
+                  <ExternalLink size={14} /> Open Live Page
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => setShowPreview(false)}
+                  className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-800 text-slate-400 hover:bg-red-500 hover:text-white transition cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body / Canvas */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex justify-center bg-slate-900">
+              <div
+                className={`transition-all duration-300 bg-white text-slate-900 shadow-2xl rounded-2xl overflow-y-auto ${
+                  previewDevice === "mobile"
+                    ? "w-[390px] h-[750px] border-8 border-slate-800 rounded-[40px] my-auto"
+                    : "w-full max-w-5xl min-h-[600px] rounded-2xl"
+                }`}
+              >
+                {activeTab === "landing" ? (
+                  <div className="divide-y divide-slate-100">
+                    {/* Top Banner */}
+                    {formData.bannerActive && (
+                      <div className="bg-[#520051] px-4 py-2.5 text-center text-xs font-medium text-white">
+                        {formData.bannerText}
+                      </div>
+                    )}
+
+                    {/* Hero Section */}
+                    <div className="px-6 py-12 text-center bg-gradient-to-b from-purple-50/50 to-white">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-100 px-3 py-1 text-xs font-bold text-[#920090]">
+                        <Sparkles size={13} /> {formData.heroBadge}
+                      </span>
+                      <h1 className="mt-4 text-3xl font-extrabold text-[#520051] sm:text-5xl tracking-tight">
+                        {formData.heroHeadingLine1} <br />
+                        <span className="bg-gradient-to-r from-[#920090] to-purple-600 bg-clip-text text-transparent">
+                          {formData.heroHeadingLine2} {formData.heroHeadingGradient}
+                        </span>
+                      </h1>
+                      <p className="mt-4 mx-auto max-w-2xl text-sm leading-relaxed text-slate-600">
+                        {formData.heroSubheading}
+                      </p>
+                      <div className="mt-6 flex justify-center gap-3">
+                        <span className="rounded-xl bg-[#520051] px-5 py-2.5 text-xs font-bold text-white shadow-md">
+                          {formData.ctaPrimaryText}
+                        </span>
+                        <span className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-bold text-[#520051]">
+                          {formData.ctaSecondaryText}
+                        </span>
+                      </div>
+                      <div className="mt-8 flex justify-center gap-6 text-xs text-slate-500 font-medium">
+                        <span>⚡ {formData.statLearners}</span>
+                        <span>📚 {formData.statCourses}</span>
+                        <span>⭐ {formData.statRating}</span>
+                      </div>
+                    </div>
+
+                    {/* AI Learning Companion Section */}
+                    <div className="px-6 py-10 bg-slate-900 text-white rounded-xl mx-4 my-6">
+                      <span className="rounded-full bg-[#920090] px-3 py-1 text-xs font-bold text-white">
+                        {formData.aiBadgeText}
+                      </span>
+                      <h2 className="mt-3 text-xl font-bold">{formData.aiTitle}</h2>
+                      <p className="mt-2 text-xs text-slate-300 max-w-xl">{formData.aiDescription}</p>
+                      <div className="mt-5 rounded-2xl border border-slate-700 bg-slate-800 p-4">
+                        <p className="text-xs font-bold text-[#920090]">{formData.aiCardTitle}</p>
+                        <p className="mt-1 text-xs italic text-slate-200">"{formData.aiCardQuote}"</p>
+                      </div>
+                    </div>
+
+                    {/* Final CTA */}
+                    <div className="px-6 py-12 text-center bg-[#520051] text-white">
+                      <h2 className="text-2xl font-bold">{formData.finalCtaTitle}</h2>
+                      <p className="mt-2 text-xs text-purple-200">{formData.finalCtaSubtitle}</p>
+                      <div className="mt-5 flex justify-center gap-3">
+                        <span className="rounded-xl bg-white px-5 py-2 text-xs font-bold text-[#520051]">
+                          {formData.finalCtaPrimaryText}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-6 space-y-6">
+                    <div className="border-b pb-4">
+                      <h2 className="text-xl font-bold text-[#520051]">Learner Dashboard Preview</h2>
+                      <p className="text-xs text-slate-500">{dashboardFormData.greetingSubtext}</p>
+                    </div>
+
+                    {/* Companion Box */}
+                    <div className="rounded-3xl border border-purple-200 bg-gradient-to-r from-purple-50 to-white p-6 shadow-sm">
+                      <div className="flex items-center gap-2 text-[#920090]">
+                        <Bot size={20} />
+                        <h3 className="font-bold text-sm text-[#520051]">{dashboardFormData.companionTitle}</h3>
+                      </div>
+                      <p className="mt-2 text-xs text-slate-600">{dashboardFormData.companionMessage}</p>
+                      <span className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#520051] px-4 py-2 text-xs font-bold text-white shadow-xs">
+                        {dashboardFormData.companionActionText} <ArrowRight size={14} />
+                      </span>
+                    </div>
+
+                    {/* Promo Highlight */}
+                    {dashboardFormData.promoActive && (
+                      <div className="rounded-3xl border border-[#eee5ee] bg-white p-6 shadow-sm">
+                        <span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-bold text-[#920090]">
+                          {dashboardFormData.promoBadge}
+                        </span>
+                        <h3 className="mt-2 font-bold text-base text-[#520051]">{dashboardFormData.promoHeading}</h3>
+                        <p className="mt-1 text-xs text-slate-600">{dashboardFormData.promoDescription}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>

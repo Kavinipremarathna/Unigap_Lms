@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { getSafeIcon } from "@/components/ui/safe-icon";
 
 const categoryIcon: Record<string, string> = {
@@ -17,14 +18,31 @@ const categoryIcon: Record<string, string> = {
 export function CourseThumb({
   category,
   gradient,
+  thumbnailUrl,
   className,
 }: {
   category: string;
-  gradient: [string, string];
+  gradient?: [string, string];
+  thumbnailUrl?: string | null;
   className?: string;
 }) {
+  const [imgError, setImgError] = useState(false);
   const iconName = categoryIcon[category] ?? "BookOpen";
   const Icon = getSafeIcon(iconName);
+
+  if (thumbnailUrl && !imgError) {
+    return (
+      <div className={`${className} relative overflow-hidden bg-slate-900 border-b border-border`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={thumbnailUrl}
+          alt={category}
+          onError={() => setImgError(true)}
+          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+        />
+      </div>
+    );
+  }
 
   return (
     <div

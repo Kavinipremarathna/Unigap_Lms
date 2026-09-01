@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Code2,
@@ -27,22 +28,66 @@ import { CourseCard } from "@/components/courses/course-card";
 import { Hero } from "@/components/marketing/hero";
 import { Faq } from "@/components/marketing/faq";
 import { ProgressRing } from "@/components/gamification/progress-ring";
-import { courses } from "@/lib/mock/courses";
+import { courses, getStoredCourses } from "@/lib/mock/courses";
+import { Course } from "@/lib/types";
 import { testimonials } from "@/lib/mock/misc";
 import { useSiteContent } from "@/lib/context/site-content-context";
 
 const categories = [
   { label: "Web Development", icon: Code2, count: 24 },
-  { label: "Programming", icon: Terminal, count: 31 },
-  { label: "Data Science", icon: BarChart3, count: 18 },
-  { label: "Cloud Computing", icon: Cloud, count: 14 },
+  { label: "Civil Engineering", icon: Terminal, count: 16 },
+  { label: "Electrical Engineering", icon: BarChart3, count: 18 },
+  { label: "Mechanical Engineering", icon: Cloud, count: 14 },
   { label: "Artificial Intelligence", icon: BrainCircuit, count: 12 },
   { label: "Cybersecurity", icon: ShieldCheck, count: 9 },
 ];
 
 export default function HomePage() {
   const { landing } = useSiteContent();
-  const featured = [...courses].sort((a, b) => b.learners - a.learners).slice(0, 4);
+  const [featured, setFeatured] = useState<Course[]>([]);
+
+  useEffect(() => {
+    const loadCourses = async () => {
+      try {
+        const res = await fetch("/api/admin/courses");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.courses) && data.courses.length > 0) {
+            const mapped: Course[] = data.courses.map((c: any) => ({
+              id: c.id,
+              slug: c.slug,
+              title: c.title,
+              shortDescription: c.shortDescription || c.description,
+              description: c.description,
+              category: c.category,
+              level: c.level || "Beginner",
+              durationHours: c.durationHours || 10,
+              rating: typeof c.rating === "number" ? c.rating : 5.0,
+              reviewCount: 12,
+              learners: c.studentsCount || 0,
+              price: Number(c.price) || 0,
+              isFree: c.isFree,
+              instructorId: c.instructorId,
+              instructorName: c.instructorName,
+              gradient: ["#520051", "#920090"],
+              outcomes: [],
+              requirements: [],
+              status: c.status,
+              isPublished: c.isPublished,
+              thumbnailUrl: c.thumbnailUrl || null,
+            }));
+            setFeatured(mapped.slice(0, 4));
+            return;
+          }
+        }
+      } catch (err) {
+        console.error("HomePage fetch courses error:", err);
+      }
+      setFeatured(getStoredCourses().slice(0, 4));
+    };
+
+    loadCourses();
+  }, []);
 
   return (
     <div className="bg-bg text-ink min-h-screen transition-colors">
@@ -54,14 +99,15 @@ export default function HomePage() {
         <section className="container-app py-16">
           <div className="flex items-end justify-between">
             <div>
-              <h2 className="font-serif text-2xl font-medium text-ink sm:text-3xl">
+              <p className="text-xs font-mono font-bold uppercase tracking-wider text-[#920090]">Top Categories</p>
+              <h2 className="mt-1 font-serif text-2xl font-bold text-[#520051] sm:text-3xl">
                 {landing.categoriesTitle}
               </h2>
-              <p className="mt-1.5 text-sm text-ink-muted">{landing.categoriesSubtitle}</p>
+              <p className="mt-1.5 text-sm text-slate-500">{landing.categoriesSubtitle}</p>
             </div>
             <Link
               href="/courses"
-              className="hidden text-xs font-mono font-medium text-primary sm:flex items-center gap-1 hover:underline"
+              className="hidden text-xs font-mono font-bold text-[#920090] sm:flex items-center gap-1 hover:underline"
             >
               View all <ArrowRight size={14} />
             </Link>
@@ -69,12 +115,12 @@ export default function HomePage() {
           <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
             {categories.map((c) => (
               <Link key={c.label} href="/courses">
-                <Card className="flex flex-col items-center gap-2 p-5 text-center transition-all duration-200 hover:-translate-y-1 hover:border-border-hover hover:shadow-lg rounded-[4px] border border-border bg-surface">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-[4px] border border-primary/30 bg-primary/10">
-                    <c.icon size={20} className="text-primary" />
+                <Card className="flex flex-col items-center gap-2 p-5 text-center transition-all duration-200 hover:-translate-y-1 hover:border-[#920090]/50 hover:shadow-lg rounded-2xl border border-[#eee5ee] bg-white shadow-2xs">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-50 text-[#920090] border border-purple-100">
+                    <c.icon size={22} />
                   </div>
-                  <p className="font-serif text-xs font-medium text-ink leading-tight mt-1">{c.label}</p>
-                  <p className="font-mono text-[11px] text-ink-muted">{c.count} courses</p>
+                  <p className="font-bold text-xs text-[#520051] leading-tight mt-1">{c.label}</p>
+                  <p className="font-mono text-[11px] text-slate-400">{c.count} courses</p>
                 </Card>
               </Link>
             ))}
@@ -82,18 +128,19 @@ export default function HomePage() {
         </section>
 
         {/* Popular courses */}
-        <section className="border-t border-border bg-surface-2/60 py-16">
+        <section className="border-t border-[#eee5ee] bg-[#faf5fa]/70 py-16">
           <div className="container-app">
             <div className="flex items-end justify-between">
               <div>
-                <h2 className="font-serif text-2xl font-medium text-ink sm:text-3xl">
+                <p className="text-xs font-mono font-bold uppercase tracking-wider text-[#920090]">Featured Learning</p>
+                <h2 className="mt-1 font-serif text-2xl font-bold text-[#520051] sm:text-3xl">
                   {landing.popularCoursesTitle}
                 </h2>
-                <p className="mt-1.5 text-sm text-ink-muted">{landing.popularCoursesSubtitle}</p>
+                <p className="mt-1.5 text-sm text-slate-500">{landing.popularCoursesSubtitle}</p>
               </div>
               <Link
                 href="/courses"
-                className="hidden text-xs font-mono font-medium text-primary sm:flex items-center gap-1 hover:underline"
+                className="hidden text-xs font-mono font-bold text-[#920090] sm:flex items-center gap-1 hover:underline"
               >
                 Browse all <ArrowRight size={14} />
               </Link>
@@ -109,10 +156,11 @@ export default function HomePage() {
         {/* How UNIGAP works */}
         <section className="container-app py-16">
           <div className="mx-auto max-w-xl text-center">
-            <h2 className="font-serif text-2xl font-medium text-ink sm:text-3xl">
+            <p className="text-xs font-mono font-bold uppercase tracking-wider text-[#920090]">Simple 3-Step Path</p>
+            <h2 className="mt-1 font-serif text-2xl font-bold text-[#520051] sm:text-3xl">
               {landing.howWorksTitle}
             </h2>
-            <p className="mt-2 text-sm text-ink-muted">{landing.howWorksSubtitle}</p>
+            <p className="mt-2 text-sm text-slate-500">{landing.howWorksSubtitle}</p>
           </div>
           <div className="mt-10 grid gap-6 sm:grid-cols-3">
             {[
@@ -132,13 +180,13 @@ export default function HomePage() {
                 desc: landing.step3Desc,
               },
             ].map((s, i) => (
-              <Card key={s.title} className="p-6 rounded-[4px] border border-border bg-surface">
-                <div className="flex h-9 w-9 items-center justify-center rounded-[4px] bg-primary text-primary-fg font-mono text-sm font-bold">
+              <Card key={s.title} className="p-6 rounded-2xl border border-[#eee5ee] bg-white shadow-xs hover:shadow-md transition">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#520051] text-white font-mono text-xs font-bold">
                   {i + 1}
                 </div>
-                <s.icon size={22} className="mt-4 text-primary" />
-                <h3 className="mt-3 font-serif text-base font-medium text-ink">{s.title}</h3>
-                <p className="mt-1.5 text-sm text-ink-muted leading-relaxed">{s.desc}</p>
+                <s.icon size={24} className="mt-4 text-[#920090]" />
+                <h3 className="mt-3 font-bold text-base text-[#520051]">{s.title}</h3>
+                <p className="mt-1.5 text-xs text-slate-500 leading-relaxed">{s.desc}</p>
               </Card>
             ))}
           </div>

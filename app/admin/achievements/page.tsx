@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Award,
   Plus,
@@ -20,12 +20,13 @@ import {
   Sparkles,
   Filter,
   Layers,
+  Loader2,
 } from "lucide-react";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { getSafeIcon } from "@/components/ui/safe-icon";
 
 export type AdminAchievement = {
-  id: string | number;
+  id: string;
   title: string;
   description: string;
   requirement: string;
@@ -33,68 +34,10 @@ export type AdminAchievement = {
   unlockedBy: number;
   active: boolean;
   category: "milestone" | "streak" | "mastery" | "goal";
-  icon: "award" | "flame" | "trophy" | "target" | "star";
+  icon: "award" | "flame" | "trophy" | "target" | "star" | string;
 };
 
-const initialAchievements: AdminAchievement[] = [
-  {
-    id: "ach-1",
-    title: "First Step",
-    description: "Complete your first lesson on UNIGAP.",
-    requirement: "Complete 1 lesson",
-    xp: 50,
-    unlockedBy: 1240,
-    active: true,
-    category: "milestone",
-    icon: "award",
-  },
-  {
-    id: "ach-2",
-    title: "Quiz Master",
-    description: "Successfully complete 10 quizzes with a passing grade.",
-    requirement: "Complete 10 quizzes",
-    xp: 150,
-    unlockedBy: 680,
-    active: true,
-    category: "mastery",
-    icon: "trophy",
-  },
-  {
-    id: "ach-3",
-    title: "7 Day Streak",
-    description: "Learn for seven consecutive days without missing a day.",
-    requirement: "Maintain a 7-day streak",
-    xp: 200,
-    unlockedBy: 520,
-    active: true,
-    category: "streak",
-    icon: "flame",
-  },
-  {
-    id: "ach-4",
-    title: "Goal Crusher",
-    description: "Complete five weekly learning goals.",
-    requirement: "Complete 5 weekly goals",
-    xp: 300,
-    unlockedBy: 245,
-    active: true,
-    category: "goal",
-    icon: "target",
-  },
-  {
-    id: "ach-5",
-    title: "Learning Legend",
-    description: "Reach Level 10 on your learner profile.",
-    requirement: "Reach Level 10",
-    xp: 500,
-    unlockedBy: 96,
-    active: true,
-    category: "mastery",
-    icon: "star",
-  },
-];
-
-const categoryColors: Record<AdminAchievement["category"], { bg: string; text: string; gradient: string }> = {
+const categoryColors: Record<string, { bg: string; text: string; gradient: string }> = {
   milestone: { bg: "bg-emerald-50 text-emerald-700 border-emerald-200", text: "text-emerald-600", gradient: "from-emerald-500 to-teal-600" },
   streak: { bg: "bg-amber-50 text-amber-700 border-amber-200", text: "text-amber-600", gradient: "from-amber-500 to-orange-600" },
   mastery: { bg: "bg-purple-50 text-purple-700 border-purple-200", text: "text-purple-600", gradient: "from-[#520051] to-[#D400D1]" },
@@ -102,11 +45,30 @@ const categoryColors: Record<AdminAchievement["category"], { bg: string; text: s
 };
 
 export default function AdminAchievementsPage() {
-  const [achievements, setAchievements] = useState<AdminAchievement[]>(initialAchievements);
+  const [achievements, setAchievements] = useState<AdminAchievement[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [showForm, setShowForm] = useState(false);
   const [editingAchievement, setEditingAchievement] = useState<AdminAchievement | null>(null);
+
+  const fetchAchievementsFromDB = async () => {
+    try {
+      const res = await fetch("/api/achievements");
+      const data = await res.json();
+      if (res.ok && data.achievements) {
+        setAchievements(data.achievements);
+      }
+    } catch (err) {
+      console.error("Failed to load achievements from DB:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAchievementsFromDB();
+  }, []);
 
   const filteredAchievements = achievements.filter((achievement) => {
     const matchesSearch = `${achievement.title} ${achievement.description} ${achievement.requirement}`
@@ -116,17 +78,39 @@ export default function AdminAchievementsPage() {
     return matchesSearch && matchesCategory;
   });
 
-  const toggleAchievementStatus = (id: string | number) => {
+  const toggleAchievementStatus = async (id: string) => {
+    const target = achievements.find((a) => a.id === id);
+    if (!target) return;
+    const newActiveState = !target.active;
+
     setAchievements((current) =>
-      current.map((item) => (item.id === id ? { ...item, active: !item.active } : item))
+      current.map((item) => (item.id === id ? { ...item, active: newActiveState } : item))
     );
+
+    try {
+      await fetch("/api/achievements", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, active: newActiveState }),
+      });
+    } catch (err) {
+      console.error("Failed to update active state in DB:", err);
+    }
   };
 
-  const deleteAchievement = (id: string | number) => {
+  const deleteAchievement = async (id: string) => {
     const item = achievements.find((a) => a.id === id);
     if (!item) return;
-    if (confirm(`Are you sure you want to delete "${item.title}"?`)) {
-      setAchievements((current) => current.filter((a) => a.id !== id));
+    if (!confirm(`Are you sure you want to delete "${item.title}" from PostgreSQL database?`)) return;
+
+    setAchievements((current) => current.filter((a) => a.id !== id));
+
+    try {
+      await fetch(`/api/achievements?id=${id}`, {
+        method: "DELETE",
+      });
+    } catch (err) {
+      console.error("Failed to delete achievement from DB:", err);
     }
   };
 
@@ -140,13 +124,40 @@ export default function AdminAchievementsPage() {
     setShowForm(true);
   };
 
-  const handleSaveAchievement = (savedItem: AdminAchievement) => {
+  const handleSaveAchievement = async (savedItem: AdminAchievement) => {
     if (editingAchievement) {
       setAchievements((current) =>
         current.map((item) => (item.id === savedItem.id ? savedItem : item))
       );
+      try {
+        await fetch("/api/achievements", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(savedItem),
+        });
+      } catch (err) {
+        console.error("Error updating achievement in DB:", err);
+      }
     } else {
-      setAchievements((current) => [savedItem, ...current]);
+      try {
+        const res = await fetch("/api/achievements", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(savedItem),
+        });
+        const data = await res.json();
+        if (res.ok && data.achievement) {
+          setAchievements((current) => [
+            {
+              ...data.achievement,
+              unlockedBy: 0,
+            },
+            ...current,
+          ]);
+        }
+      } catch (err) {
+        console.error("Error creating achievement in DB:", err);
+      }
     }
     setShowForm(false);
     setEditingAchievement(null);
