@@ -20,14 +20,22 @@ import {
   ShieldCheck,
   Zap,
   Check,
+  Trophy,
+  PartyPopper,
+  X,
 } from "lucide-react";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Badge } from "@/components/ui/badge";
 import { getStoredCourses } from "@/lib/mock/courses";
 import { getUserStats, enrollInCourse, saveUserStats } from "@/lib/services/user-progress";
-import { isUserAuthenticated } from "@/lib/services/auth.service";
+import { isUserAuthenticated, getAuthenticatedUser } from "@/lib/services/auth.service";
 import { Course, ModuleRef, LessonRef } from "@/lib/types";
+import {
+  generateCourseCertificate,
+  IssuedCertificateData,
+} from "@/lib/services/certificate-template";
+import { CertificateModal } from "@/components/certificates/certificate-modal";
 
 export default function CourseDetailPage() {
   const [course, setCourse] = useState<Course | null>(null);
@@ -35,6 +43,9 @@ export default function CourseDetailPage() {
   const [activeModuleIndex, setActiveModuleIndex] = useState(0);
   const [activeLessonIndex, setActiveLessonIndex] = useState(0);
   const [completedLessonIds, setCompletedLessonIds] = useState<Set<string>>(new Set());
+  const [showToast, setShowToast] = useState<string | null>(null);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [claimedCert, setClaimedCert] = useState<IssuedCertificateData | null>(null);
   const [quizAnswers, setQuizAnswers] = useState<Record<number, number>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [quizScore, setQuizScore] = useState<{
@@ -45,21 +56,21 @@ export default function CourseDetailPage() {
     passed: boolean;
   } | null>(null);
 
-  // Read slug from URL path
-  const [slug, setSlug] = useState<string>("");
+  const params = useParams();
+  const rawSlug = (params?.slug as string) || "";
+  const [slug, setSlug] = useState<string>(rawSlug);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (params?.slug) {
+      setSlug(params.slug as string);
+    } else if (typeof window !== "undefined") {
       const parts = window.location.pathname.split("/");
       const currentSlug = parts[parts.length - 1];
-      setSlug(currentSlug);
-
-      if (!isUserAuthenticated()) {
-        window.location.href = `/login?redirect=/courses/${currentSlug}`;
-        return;
+      if (currentSlug && currentSlug !== "[slug]") {
+        setSlug(currentSlug);
       }
     }
-  }, []);
+  }, [params?.slug]);
 
   const loadCourseData = async () => {
     if (!slug) return;
@@ -104,7 +115,6 @@ export default function CourseDetailPage() {
                     "Basic understanding of the subject area",
                     "A computer with internet access",
                   ],
-              // Use the real curriculum from the database — this is what the admin saved
               curriculum: Array.isArray(found.curriculum) && found.curriculum.length > 0
                 ? found.curriculum.map((m: any) => ({
                     id: m.id,
@@ -191,23 +201,46 @@ export default function CourseDetailPage() {
     return list;
   }, [course]);
 
+  // Restore completed lesson state from user stats
+  useEffect(() => {
+    if (!course || allLessons.length === 0) return;
+    const stats = getUserStats();
+    const restoredSet = new Set<string>();
+    allLessons.forEach(({ lesson }) => {
+      const k1 = `${course.id}_${lesson.id}`;
+      const k2 = `${course.slug}_${lesson.id}`;
+      if (stats.lessonProgress[k1] === 1 || stats.lessonProgress[k2] === 1 || lesson.completed) {
+        restoredSet.add(lesson.id);
+      }
+    });
+    setCompletedLessonIds(restoredSet);
+  }, [course, allLessons]);
+
   const progressPercentage = useMemo(() => {
     if (allLessons.length === 0) return 0;
     return Math.round((completedLessonIds.size / allLessons.length) * 100);
   }, [completedLessonIds, allLessons]);
 
+  const isLastLesson = useMemo(() => {
+    if (allLessons.length === 0) return false;
+    const currentIdx = allLessons.findIndex(
+      (item) => item.modIdx === activeModuleIndex && item.lesIdx === activeLessonIndex
+    );
+    return currentIdx === allLessons.length - 1;
+  }, [allLessons, activeModuleIndex, activeLessonIndex]);
+
   const handleEnroll = () => {
     if (!course) return;
     if (!isUserAuthenticated()) {
-      window.location.href = `/login?redirect=/courses/${course.slug}`;
+      window.location.href = `/register?redirect=/courses/${course.slug}`;
       return;
     }
     enrollInCourse(course);
     setIsEnrolled(true);
   };
 
-  const currentModule = course?.curriculum?.[activeModuleIndex];
-  const currentLesson = currentModule?.lessons?.[activeLessonIndex];
+  const currentModule = course?.curriculum?.[activeModuleIndex] || course?.curriculum?.[0];
+  const currentLesson = currentModule?.lessons?.[activeLessonIndex] || currentModule?.lessons?.[0];
 
   const handleToggleLessonComplete = (lessonId: string) => {
     if (!course) return;
@@ -221,26 +254,97 @@ export default function CourseDetailPage() {
     }
     setCompletedLessonIds(nextCompleted);
 
+    const calcPercentage = Math.round((nextCompleted.size / (allLessons.length || 1)) * 100);
     const stats = getUserStats();
     const updatedProgressMap = {
       ...stats.lessonProgress,
       [`${course.id}_${lessonId}`]: isNowComplete ? 1 : 0,
-      [course.slug]: Math.round((nextCompleted.size / (allLessons.length || 1)) * 100),
+      [course.slug]: calcPercentage,
+      [course.id]: calcPercentage,
     };
 
     saveUserStats({
       lessonProgress: updatedProgressMap,
       xp: isNowComplete ? stats.xp + 25 : Math.max(0, stats.xp - 25),
       completedLessons: isNowComplete ? stats.completedLessons + 1 : Math.max(0, stats.completedLessons - 1),
-    });
+    }, course.id);
   };
+
+  const handleFinishLesson = (lessonId: string, autoAdvance = true) => {
+    if (!course) return;
+    const nextCompleted = new Set(completedLessonIds);
+    const isNowComplete = !nextCompleted.has(lessonId);
+
+    if (isNowComplete) {
+      nextCompleted.add(lessonId);
+    }
+    setCompletedLessonIds(nextCompleted);
+
+    const calcPercentage = Math.round((nextCompleted.size / (allLessons.length || 1)) * 100);
+    const stats = getUserStats();
+    const updatedProgressMap = {
+      ...stats.lessonProgress,
+      [`${course.id}_${lessonId}`]: 1,
+      [course.slug]: calcPercentage,
+      [course.id]: calcPercentage,
+    };
+
+    saveUserStats(
+      {
+        lessonProgress: updatedProgressMap,
+        xp: isNowComplete ? stats.xp + 25 : stats.xp,
+        completedLessons: isNowComplete ? stats.completedLessons + 1 : stats.completedLessons,
+      },
+      course.id
+    );
+
+    setShowToast(`🎉 Lesson Finished! +25 XP Earned`);
+    setTimeout(() => setShowToast(null), 3500);
+
+    if (calcPercentage >= 100 || (isLastLesson && nextCompleted.size >= allLessons.length)) {
+      let savedScore: number | undefined = undefined;
+      try {
+        const storedScore = localStorage.getItem(`unigap_course_score_${course.id}`);
+        if (storedScore) savedScore = Number(storedScore);
+      } catch {
+        // fallback
+      }
+      const activeUser = getAuthenticatedUser();
+      const studentName = activeUser?.name || activeUser?.email || "Enrolled Student";
+      const studentEmail = activeUser?.email;
+      const generatedCert = generateCourseCertificate(course.title, studentName, studentEmail, savedScore);
+      setClaimedCert(generatedCert);
+      setShowCompletionModal(true);
+    } else if (autoAdvance) {
+      handleNextLesson();
+    }
+  };
+
+  useEffect(() => {
+    if (!course || !currentLesson) return;
+    const key = `unigap_quiz_${course.id}_${currentLesson.id}`;
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.quizSubmitted) {
+          setQuizAnswers(parsed.quizAnswers || {});
+          setQuizScore(parsed.quizScore || null);
+          setQuizSubmitted(true);
+          return;
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    setQuizAnswers({});
+    setQuizSubmitted(false);
+    setQuizScore(null);
+  }, [course, activeModuleIndex, activeLessonIndex]);
 
   const handleSelectLesson = (mi: number, li: number) => {
     setActiveModuleIndex(mi);
     setActiveLessonIndex(li);
-    setQuizAnswers({});
-    setQuizSubmitted(false);
-    setQuizScore(null);
   };
 
   const handleSubmitQuiz = (questions: any[]) => {
@@ -260,24 +364,37 @@ export default function CourseDetailPage() {
     });
 
     const passed = correctCount > 0 && correctCount >= Math.ceil(questions.length * 0.5);
-    setQuizScore({
+    const scoreData = {
       correctCount,
       totalCount: questions.length,
       earnedMarks,
       totalMarks,
       passed,
-    });
+    };
+    setQuizScore(scoreData);
     setQuizSubmitted(true);
+
+    if (course && currentLesson) {
+      const key = `unigap_quiz_${course.id}_${currentLesson.id}`;
+      const scorePercentage = Math.round((earnedMarks / (totalMarks || 1)) * 100);
+      try {
+        localStorage.setItem(
+          key,
+          JSON.stringify({
+            quizAnswers,
+            quizScore: scoreData,
+            quizSubmitted: true,
+          })
+        );
+        localStorage.setItem(`unigap_course_score_${course.id}`, String(scorePercentage));
+      } catch (e) {
+        console.error("Save quiz submission error:", e);
+      }
+    }
 
     if (passed && currentLesson) {
       handleToggleLessonComplete(currentLesson.id);
     }
-  };
-
-  const handleRetakeQuiz = () => {
-    setQuizAnswers({});
-    setQuizSubmitted(false);
-    setQuizScore(null);
   };
 
   const handleNextLesson = () => {
@@ -289,9 +406,6 @@ export default function CourseDetailPage() {
       setActiveModuleIndex(activeModuleIndex + 1);
       setActiveLessonIndex(0);
     }
-    setQuizAnswers({});
-    setQuizSubmitted(false);
-    setQuizScore(null);
   };
 
   if (!course) {
@@ -313,90 +427,100 @@ export default function CourseDetailPage() {
       <Navbar />
 
       {/* Top Banner / Course Header */}
-      <section className="border-b border-border bg-surface py-10 px-6">
-        <div className="container-app">
+      <section className="relative overflow-hidden border-b border-border/80 bg-gradient-to-r from-surface via-surface-2 to-surface py-12 px-6 shadow-sm">
+        <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-[#920090]/15 blur-3xl dark:bg-[#d400d1]/20" />
+        <div className="container-app relative z-10">
           <Link
             href="/courses"
-            className="inline-flex items-center gap-1.5 text-xs font-mono text-primary hover:underline mb-4"
+            className="inline-flex items-center gap-2 text-xs font-mono font-bold text-[#920090] dark:text-[#f14df0] hover:underline mb-6"
           >
             <ArrowLeft size={14} /> Back to Course Catalog
           </Link>
 
-          <div className="flex flex-wrap items-start justify-between gap-6">
-            <div className="max-w-2xl">
+          <div className="flex flex-col lg:flex-row items-start justify-between gap-8">
+            <div className="max-w-3xl space-y-4">
               <div className="flex flex-wrap items-center gap-2 font-mono">
-                <span className="rounded-full bg-surface-2 border border-border px-3 py-0.5 text-xs font-medium text-ink-muted">
+                <span className="rounded-full bg-surface/90 border border-border px-3.5 py-1 text-xs font-bold text-ink">
                   {course.category}
                 </span>
-                <span className="rounded-full bg-surface-2 border border-border px-3 py-0.5 text-xs font-medium text-ink-muted">
+                <span className="rounded-full bg-surface/90 border border-border px-3.5 py-1 text-xs font-bold text-ink">
                   {course.level}
                 </span>
+                {course.isFree || course.price === 0 ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-3.5 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                    <Sparkles size={13} /> Free Course
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#520051]/15 border border-[#520051]/30 px-3.5 py-1 text-xs font-bold text-[#520051] dark:text-[#fde8fc]">
+                    Premium Track
+                  </span>
+                )}
                 {isEnrolled && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-accent/15 px-3 py-0.5 text-xs font-medium text-accent border border-accent/30">
-                    <CheckCircle2 size={13} /> Enrolled Learner
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500 px-3 py-1 text-xs font-bold text-white shadow-xs">
+                    <CheckCircle2 size={13} /> Enrolled
                   </span>
                 )}
               </div>
 
-              <h1 className="mt-4 font-serif text-2xl font-medium sm:text-3xl lg:text-4xl text-ink leading-tight">
+              <h1 className="font-heading text-3xl font-extrabold sm:text-4xl lg:text-5xl text-ink leading-tight">
                 {course.title}
               </h1>
 
-              <p className="mt-3 text-sm text-ink-muted leading-relaxed">
+              <p className="text-base text-ink-muted leading-relaxed">
                 {course.shortDescription || course.description}
               </p>
 
-              <div className="mt-6 flex flex-wrap items-center gap-6 text-xs font-mono text-ink-muted">
-                <div className="flex items-center gap-1.5">
-                  <BookOpen size={16} className="text-primary" />
-                  <span>{course.durationHours || 8} Hours of Content</span>
+              <div className="flex flex-wrap items-center gap-6 text-xs font-mono text-ink-muted pt-2">
+                <div className="flex items-center gap-2">
+                  <BookOpen size={16} className="text-[#920090] dark:text-[#f14df0]" />
+                  <span>{course.durationHours || 8} Hours Content</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <Star size={16} className="text-primary fill-primary" />
-                  <span>{course.rating || 5.0} Rating</span>
+                <div className="flex items-center gap-2">
+                  <Star size={16} className="text-amber-400 fill-amber-400" />
+                  <span className="font-bold text-ink">{course.rating || 5.0} Rating</span>
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                   <Users size={16} className="text-ink-muted" />
-                  <span>{(course.learners || 0).toLocaleString()} Enrolled Students</span>
+                  <span>{(course.learners || 0).toLocaleString()} Learners Enrolled</span>
                 </div>
               </div>
             </div>
 
             {/* Quick Enrollment Card */}
-            <div className="w-full max-w-sm rounded-[4px] border border-border bg-surface-2 p-6 text-ink shadow-xl">
+            <div className="w-full lg:w-96 shrink-0 rounded-3xl border border-border/80 bg-surface p-6 text-ink shadow-2xl space-y-5">
               <div className="flex items-center justify-between border-b border-border pb-4">
                 <div>
-                  <span className="text-xs font-mono text-ink-muted">Course Access</span>
-                  <p className="font-mono text-2xl font-bold text-primary">
-                    {course.isFree || course.price === 0 ? "Free Access" : `$${course.price}`}
+                  <span className="text-xs font-mono font-bold uppercase tracking-wider text-ink-muted">Access Pricing</span>
+                  <p className="font-mono text-3xl font-extrabold text-[#520051] dark:text-[#fde8fc]">
+                    {course.isFree || course.price === 0 ? "FREE" : `$${course.price}`}
                   </p>
                 </div>
-                <span className="rounded-[4px] border border-primary/30 bg-primary/10 p-3 text-primary">
-                  <Award size={28} />
-                </span>
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#520051] to-[#920090] text-white shadow-md">
+                  <Award size={26} />
+                </div>
               </div>
 
-              <div className="mt-4 space-y-2.5 text-xs text-ink-muted">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck size={16} className="text-accent" />
-                  <span>Full Lifetime Access</span>
+              <div className="space-y-3 text-xs text-ink-muted font-medium">
+                <div className="flex items-center gap-2.5">
+                  <ShieldCheck size={16} className="text-emerald-500 shrink-0" />
+                  <span>Full Lifetime Access to All Lessons</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Zap size={16} className="text-primary" />
+                <div className="flex items-center gap-2.5">
+                  <Zap size={16} className="text-[#920090] dark:text-[#f14df0] shrink-0" />
                   <span>Verified Completion Certificate</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Sparkles size={16} className="text-primary" />
-                  <span>Interactive Exercises & Quizzes</span>
+                <div className="flex items-center gap-2.5">
+                  <Sparkles size={16} className="text-[#920090] dark:text-[#f14df0] shrink-0" />
+                  <span>Interactive Quizzes & Hands-on Code</span>
                 </div>
               </div>
 
               {isEnrolled ? (
-                <div className="mt-6 rounded-[4px] bg-accent/10 p-4 border border-accent/30 text-center">
-                  <p className="text-xs font-mono font-bold text-accent flex items-center justify-center gap-1.5">
-                    <CheckCircle2 size={16} className="text-accent" /> You are enrolled in this course!
+                <div className="rounded-2xl bg-emerald-500/10 p-4 border border-emerald-500/30 text-center space-y-1">
+                  <p className="text-xs font-mono font-bold text-emerald-700 dark:text-emerald-300 flex items-center justify-center gap-1.5">
+                    <CheckCircle2 size={16} /> Enrolled & Ready!
                   </p>
-                  <p className="mt-1 text-[11px] text-ink-muted">
+                  <p className="text-[11px] text-ink-muted">
                     Access full video lessons and interactive content below.
                   </p>
                 </div>
@@ -404,9 +528,9 @@ export default function CourseDetailPage() {
                 <button
                   type="button"
                   onClick={handleEnroll}
-                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-[4px] bg-primary px-6 py-3.5 text-sm font-semibold text-primary-fg hover:opacity-90 transition shadow-sm"
+                  className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#520051] px-6 py-4 text-sm font-bold text-white hover:bg-[#920090] transition shadow-lg active:scale-95 cursor-pointer dark:bg-[#920090] dark:hover:bg-[#d400d1]"
                 >
-                  <Zap size={18} /> Enroll Now & Start Learning
+                  <Zap size={18} /> {course.isFree ? "Enroll Free & Start Learning" : "Enroll Now & Start Learning"}
                 </button>
               )}
             </div>
@@ -633,17 +757,9 @@ export default function CourseDetailPage() {
                                   <p className="text-[11px] text-ink-muted">
                                     {quizScore.passed
                                       ? "You answered the required questions correctly according to instructor marking."
-                                      : "Only questions matching the instructor-marked answer receive points. Review answers below and retake if needed."}
+                                      : "Only questions matching the instructor-marked answer receive points. Review your answers below."}
                                   </p>
                                 </div>
-
-                                <button
-                                  type="button"
-                                  onClick={handleRetakeQuiz}
-                                  className="inline-flex items-center gap-1.5 rounded-xl border border-current bg-white dark:bg-slate-900 px-4 py-2 text-xs font-bold shadow-xs hover:opacity-90 transition cursor-pointer"
-                                >
-                                  Retake Quiz ↺
-                                </button>
                               </div>
                             )}
 
@@ -722,7 +838,7 @@ export default function CourseDetailPage() {
                                             optionClasses = "border-emerald-500/70 bg-emerald-50/60 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 font-semibold";
                                             badge = (
                                               <span className="rounded-md bg-emerald-700 px-2 py-0.5 text-[10px] font-bold text-white shrink-0">
-                                                ✓ Instructor's Answer
+                                                ✓ Instructor&apos;s Answer
                                               </span>
                                             );
                                           }
@@ -785,13 +901,9 @@ export default function CourseDetailPage() {
                                   Submit Quiz Assessment
                                 </button>
                               ) : (
-                                <button
-                                  type="button"
-                                  onClick={handleRetakeQuiz}
-                                  className="rounded-xl border border-border bg-surface px-5 py-2 text-xs font-semibold text-ink-muted hover:text-ink transition cursor-pointer"
-                                >
-                                  Try Again ↺
-                                </button>
+                                <span className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-50 dark:bg-emerald-950/50 px-4 py-2 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                                  ✓ Assessment Submitted (1 attempt allowed)
+                                </span>
                               )}
                             </div>
                           </div>
@@ -801,7 +913,7 @@ export default function CourseDetailPage() {
                   </div>
 
                   {/* Navigation controls */}
-                  <div className="mt-8 flex items-center justify-between border-t border-border pt-5">
+                  <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-5">
                     <button
                       type="button"
                       onClick={() => {
@@ -813,18 +925,47 @@ export default function CourseDetailPage() {
                         }
                       }}
                       disabled={activeModuleIndex === 0 && activeLessonIndex === 0}
-                      className="rounded-[4px] border border-border bg-surface-2 px-4 py-2.5 text-xs font-mono text-ink-muted disabled:opacity-40 hover:bg-surface"
+                      className="rounded-xl border border-border bg-surface-2 px-5 py-3 text-xs font-mono text-ink-muted disabled:opacity-40 hover:bg-surface transition cursor-pointer"
                     >
                       ← Previous Lesson
                     </button>
 
-                    <button
-                      type="button"
-                      onClick={handleNextLesson}
-                      className="inline-flex items-center gap-1.5 rounded-[4px] bg-primary px-5 py-2.5 text-xs font-semibold text-primary-fg hover:opacity-90"
-                    >
-                      Next Lesson <ChevronRight size={14} />
-                    </button>
+                    <div className="flex flex-wrap items-center gap-3">
+                      {!completedLessonIds.has(currentLesson.id) ? (
+                        <button
+                          type="button"
+                          onClick={() => handleFinishLesson(currentLesson.id, true)}
+                          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#520051] to-[#920090] px-6 py-3 text-xs font-bold text-white shadow-md hover:opacity-95 transition cursor-pointer active:scale-95"
+                        >
+                          <CheckCircle2 size={16} />
+                          {isLastLesson ? "Finish Final Lesson 🎉" : "Finish Lesson & Continue →"}
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 px-4 py-2.5 text-xs font-bold text-emerald-700 dark:text-emerald-300 font-mono">
+                            <CheckCircle2 size={15} /> Lesson Finished ✓
+                          </span>
+
+                          {isLastLesson ? (
+                            <button
+                              type="button"
+                              onClick={() => setShowCompletionModal(true)}
+                              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-6 py-3 text-xs font-bold text-white shadow-md hover:opacity-95 transition cursor-pointer"
+                            >
+                              <Trophy size={16} /> Finish Course & Claim Certificate
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={handleNextLesson}
+                              className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-5 py-3 text-xs font-semibold text-primary-fg hover:opacity-90 transition cursor-pointer"
+                            >
+                              Next Lesson <ChevronRight size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -864,7 +1005,7 @@ export default function CourseDetailPage() {
                             >
                               <div className="flex items-center gap-2 min-w-0">
                                 {isDone ? (
-                                  <CheckCircle2 size={14} className="text-accent shrink-0" />
+                                  <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
                                 ) : les.videoUrl || les.type === "video" ? (
                                   <PlayCircle size={14} className="text-primary shrink-0" />
                                 ) : les.type === "quiz" ? (
@@ -872,9 +1013,14 @@ export default function CourseDetailPage() {
                                 ) : (
                                   <FileText size={14} className="text-accent shrink-0" />
                                 )}
-                                <span className="truncate">{les.title}</span>
+                                <span className={`truncate ${isDone ? "line-through opacity-85" : ""}`}>{les.title}</span>
                               </div>
                               <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                                {isDone && (
+                                  <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                                    Done ✓
+                                  </span>
+                                )}
                                 {les.attachmentUrl && (
                                   <span className="text-[11px]" title="Resource attachment available">📎</span>
                                 )}
@@ -930,12 +1076,17 @@ export default function CourseDetailPage() {
                       </h3>
                       <div className="mt-2.5 space-y-1.5">
                         {mod.lessons?.map((les, li) => (
-                          <div key={les.id || li} className="flex items-center justify-between text-xs text-ink-muted py-1.5 border-b border-border/50 last:border-0">
-                            <span className="flex items-center gap-2">
-                              <Lock size={13} className="text-ink-muted" /> {les.title}
+                          <button
+                            key={les.id || li}
+                            type="button"
+                            onClick={handleEnroll}
+                            className="w-full flex items-center justify-between text-xs text-ink-muted py-2 px-1 hover:bg-surface border-b border-border/50 last:border-0 rounded-lg transition cursor-pointer text-left group"
+                          >
+                            <span className="flex items-center gap-2 group-hover:text-primary">
+                              <Lock size={13} className="text-amber-500 shrink-0" /> {les.title}
                             </span>
-                            <span className="font-mono text-[10px] text-ink-muted">{les.durationMin} min</span>
-                          </div>
+                            <span className="font-mono text-[10px] text-ink-muted group-hover:underline">Login to Unlock →</span>
+                          </button>
                         ))}
                       </div>
                     </div>
@@ -964,6 +1115,91 @@ export default function CourseDetailPage() {
           </div>
         )}
       </main>
+
+      {/* COURSE COMPLETION CELEBRATION MODAL */}
+      {showCompletionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in">
+          <div className="relative w-full max-w-lg rounded-3xl border border-amber-500/40 bg-surface p-8 text-center shadow-2xl space-y-6">
+            <button
+              type="button"
+              onClick={() => setShowCompletionModal(false)}
+              className="absolute right-4 top-4 rounded-full p-2 text-ink-muted hover:bg-surface-2 transition cursor-pointer"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-xl">
+              <Trophy size={42} />
+            </div>
+
+            <div className="space-y-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 px-3.5 py-1 text-xs font-mono font-bold text-amber-600 dark:text-amber-300">
+                <PartyPopper size={14} /> Course Accomplishment Unlocked
+              </span>
+              <h2 className="font-heading text-2xl font-extrabold text-ink sm:text-3xl">
+                Congratulations! 🎉
+              </h2>
+              <p className="text-sm text-ink-muted leading-relaxed">
+                You have successfully finished all lessons in <strong className="text-ink font-bold">{course.title}</strong>!
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 rounded-2xl bg-surface-2 p-4 border border-border">
+              <div>
+                <span className="text-[11px] font-mono text-ink-muted uppercase">Total XP Earned</span>
+                <p className="font-mono text-xl font-extrabold text-[#920090] dark:text-[#f14df0]">+{(allLessons.length * 25) + 100} XP</p>
+              </div>
+              <div>
+                <span className="text-[11px] font-mono text-ink-muted uppercase">Course Progress</span>
+                <p className="font-mono text-xl font-extrabold text-emerald-600 dark:text-emerald-400">100% Complete</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!claimedCert && course) {
+                    const cert = generateCourseCertificate(course.title);
+                    setClaimedCert(cert);
+                  }
+                  setShowCompletionModal(false);
+                }}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#520051] px-6 py-3.5 text-xs font-bold text-white hover:bg-[#920090] transition shadow-md dark:bg-[#920090] cursor-pointer"
+              >
+                <Award size={16} /> View & Claim Certificate
+              </button>
+              <Link href="/dashboard" className="w-full sm:w-auto">
+                <button
+                  type="button"
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-surface-2 px-6 py-3.5 text-xs font-mono font-bold text-ink hover:bg-surface transition cursor-pointer"
+                >
+                  Return to Dashboard
+                </button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* GENERATED CERTIFICATE MODAL VIEW */}
+      <CertificateModal
+        certificate={claimedCert}
+        onClose={() => setClaimedCert(null)}
+      />
+
+      {/* FLOATING TOAST NOTIFICATION */}
+      {showToast && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl bg-slate-900 px-5 py-4 text-white shadow-2xl border border-purple-500/40 animate-in slide-in-from-bottom-5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#520051] to-[#920090] text-white">
+            <Sparkles size={18} />
+          </div>
+          <div className="text-xs font-medium">
+            <p className="font-bold text-white">{showToast}</p>
+            <p className="text-[10px] text-slate-300 font-mono">Progress synchronized to database</p>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

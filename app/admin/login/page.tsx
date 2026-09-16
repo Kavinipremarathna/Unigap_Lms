@@ -48,17 +48,15 @@ export default function AdminLoginPage() {
       }
 
 
-      // Standard Admin login succeeded
+      // Standard Admin login succeeded - save ONLY in admin keys
       if (typeof window !== "undefined") {
         const normRole = (data.user?.role || "").toLowerCase().includes("super") ? "super_admin" : "admin";
         localStorage.setItem("unigap_admin_role", normRole);
         localStorage.setItem("unigap_admin_profile", JSON.stringify({ ...data.user, role: normRole }));
         if (data.token) {
-          localStorage.setItem("unigap_auth_token", data.token);
+          localStorage.setItem("unigap_admin_token", data.token);
         }
-        localStorage.setItem("unigap_auth_user", JSON.stringify({ ...data.user, role: normRole }));
-        localStorage.setItem("unigap_auth_logged_in", "true");
-        window.dispatchEvent(new Event("unigap_auth_changed"));
+        window.dispatchEvent(new Event("unigap_admin_auth_changed"));
       }
       window.location.href = "/admin";
     } catch (err: any) {
@@ -100,11 +98,9 @@ export default function AdminLoginPage() {
         localStorage.setItem("unigap_admin_role", normRole);
         localStorage.setItem("unigap_admin_profile", JSON.stringify({ ...data.user, role: normRole }));
         if (data.token) {
-          localStorage.setItem("unigap_auth_token", data.token);
+          localStorage.setItem("unigap_admin_token", data.token);
         }
-        localStorage.setItem("unigap_auth_user", JSON.stringify({ ...data.user, role: normRole }));
-        localStorage.setItem("unigap_auth_logged_in", "true");
-        window.dispatchEvent(new Event("unigap_auth_changed"));
+        window.dispatchEvent(new Event("unigap_admin_auth_changed"));
       }
 
       setTimeout(() => {
@@ -131,7 +127,7 @@ export default function AdminLoginPage() {
             <span className="flex h-10 w-10 items-center justify-center rounded-[4px] bg-primary text-primary-fg shadow-sm">
               <ShieldCheck size={22} />
             </span>
-            UNIGAP
+            UNIGAP Learn
           </Link>
 
           <p className="mt-2 text-xs font-mono font-semibold uppercase tracking-widest text-primary">
@@ -345,7 +341,7 @@ export default function AdminLoginPage() {
               href="/"
               className="text-xs font-mono font-semibold text-primary hover:underline"
             >
-              ← Back to UNIGAP LMS
+              ← Back to UNIGAP Learn
             </Link>
           </div>
         </div>

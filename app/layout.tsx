@@ -1,27 +1,27 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Outfit, Lora, JetBrains_Mono } from "next/font/google";
+import { Montserrat, Raleway, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { SiteContentProvider } from "@/lib/context/site-content-context";
 import { ThemeProvider } from "@/lib/context/theme-context";
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const montserrat = Montserrat({
   subsets: ["latin"],
   variable: "--font-sans",
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["300", "400", "500", "600", "700", "800"],
   display: "swap",
 });
 
-const outfit = Outfit({
+const raleway = Raleway({
   subsets: ["latin"],
   variable: "--font-heading",
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700", "800", "900"],
   display: "swap",
 });
 
-const lora = Lora({
+const ralewaySerif = Raleway({
   subsets: ["latin"],
   variable: "--font-serif",
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700", "800", "900"],
   display: "swap",
 });
 
@@ -53,7 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${plusJakartaSans.variable} ${outfit.variable} ${lora.variable} ${jetbrainsMono.variable}`}
+      className={`${montserrat.variable} ${raleway.variable} ${ralewaySerif.variable} ${jetbrainsMono.variable}`}
     >
       <body className="bg-bg text-ink min-h-screen antialiased">
         <ThemeProvider>

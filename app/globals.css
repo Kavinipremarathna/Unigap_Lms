@@ -3,12 +3,11 @@
 @tailwind utilities;
 
 :root {
-  --font-sans: var(--font-sans), "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-heading: var(--font-heading), "Outfit", sans-serif;
-  --font-serif: var(--font-serif), "Lora", Georgia, serif;
-  --font-mono: var(--font-mono), "JetBrains Mono", monospace;
-
-
+  /* Font Family Definitions */
+  --font-sans: "Montserrat", "Calibri", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-heading: "Raleway", "Montserrat", sans-serif;
+  --font-serif: "Raleway", "Montserrat", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
 
   /* User Palette Light Mode (DEFAULT) */
   /* #520051 Deep Dark Plum | #920090 Royal Purple | #D400D1 Vibrant Magenta | #FDE8FC Soft Pink | #FFFFFF Pure White */
@@ -36,11 +35,11 @@
   --streak: 301 100% 16%;
   --xp: 301 100% 29%;
 
-  --radius-sm: 2px;
-  --radius-md: 4px;
-  --radius-lg: 4px;
-  --radius-xl: 4px;
-  --radius-2xl: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 24px;
 }
 
 .dark {
@@ -83,31 +82,31 @@ html {
 body {
   background-color: hsl(var(--bg));
   color: hsl(var(--ink));
-  font-family: var(--font-sans);
+  font-family: var(--font-sans), "Montserrat", sans-serif;
   -webkit-font-smoothing: antialiased;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 button, input, select, textarea, optgroup {
-  font-family: var(--font-sans);
+  font-family: var(--font-sans), "Montserrat", sans-serif;
 }
 
 
 h1, h2, h3, h4, h5, h6, .font-heading {
-  font-family: var(--font-heading);
-  font-weight: 600;
+  font-family: var(--font-heading), "Raleway", sans-serif !important;
+  font-weight: 700;
 }
 
 .font-serif, .reading-content {
-  font-family: var(--font-serif);
+  font-family: var(--font-serif), "Raleway", "Montserrat", sans-serif !important;
 }
 
 .font-sans {
-  font-family: var(--font-sans);
+  font-family: var(--font-sans), "Montserrat", sans-serif;
 }
 
 .font-mono {
-  font-family: var(--font-mono);
+  font-family: var(--font-mono), monospace;
 }
 
 
@@ -135,4 +134,42 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     radial-gradient(circle at 15% 20%, rgba(82, 0, 81, 0.08), transparent 40%),
     radial-gradient(circle at 85% 15%, rgba(212, 0, 209, 0.08), transparent 40%);
 }
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.dark .glass-panel {
+  background: rgba(30, 0, 30, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.gradient-text-primary {
+  background: linear-gradient(135deg, #520051 0%, #920090 50%, #d400d1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.dark .gradient-text-primary {
+  background: linear-gradient(135deg, #fde8fc 0%, #f14df0 50%, #d400d1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.card-hover-effect {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
+}
+
+.card-hover-effect:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 30px -10px rgba(82, 0, 81, 0.12), 0 8px 15px -6px rgba(146, 0, 144, 0.08);
+}
+
+.dark .card-hover-effect:hover {
+  box-shadow: 0 20px 30px -10px rgba(212, 0, 209, 0.2), 0 8px 15px -6px rgba(241, 77, 240, 0.15);
+}
+
 

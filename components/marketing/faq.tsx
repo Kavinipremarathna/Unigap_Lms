@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 const faqs = [
   {
-    q: "Is UNIGAP suitable for complete beginners?",
+    q: "Is UNIGAP Learn suitable for complete beginners?",
     a: "Yes. Every course lists its level clearly, and beginner paths assume no prior experience. The daily goal and streak system are designed to build consistency from day one.",
   },
   {
@@ -22,7 +22,7 @@ const faqs = [
     a: "Yes, you can upgrade or downgrade at any time from your settings. Your progress and achievements carry over regardless of plan.",
   },
   {
-    q: "Is UNIGAP available on mobile?",
+    q: "Is UNIGAP Learn available on mobile?",
     a: "Yes. The full learning experience — courses, dashboard, and achievements — is responsive and optimized for mobile use.",
   },
 ];

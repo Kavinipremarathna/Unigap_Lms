@@ -68,12 +68,12 @@ export function Sidebar({ isCollapsed = false, onToggleCollapse }: SidebarProps)
   return (
     <aside
       className={cn(
-        "sticky top-0 hidden h-screen shrink-0 border-r border-border bg-surface lg:flex lg:flex-col transition-all duration-300 z-30",
+        "sticky top-0 hidden h-screen shrink-0 border-r border-border/80 bg-surface lg:flex lg:flex-col transition-all duration-300 z-30",
         isCollapsed ? "w-20" : "w-64"
       )}
     >
       {/* Sidebar Top Header */}
-      <div className="flex h-16 items-center justify-between border-b border-border px-4">
+      <div className="flex h-16 items-center justify-between border-b border-border/80 px-4">
         {!isCollapsed ? (
           <Link href="/dashboard" className="flex items-center">
             <Logo />
@@ -81,8 +81,8 @@ export function Sidebar({ isCollapsed = false, onToggleCollapse }: SidebarProps)
         ) : (
           <Link
             href="/dashboard"
-            className="mx-auto flex h-9 w-9 items-center justify-center rounded-[4px] bg-primary font-serif font-bold text-primary-fg text-lg shadow-sm"
-            title="UNIGAP Dashboard"
+            className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#520051] to-[#920090] font-heading font-extrabold text-white text-lg shadow-md"
+            title="UNIGAP Learn Dashboard"
           >
             U
           </Link>
@@ -104,10 +104,10 @@ export function Sidebar({ isCollapsed = false, onToggleCollapse }: SidebarProps)
               href={item.href}
               title={isCollapsed ? item.label : undefined}
               className={cn(
-                "flex items-center gap-3 rounded-[4px] py-2.5 text-sm font-medium transition-all group relative",
+                "flex items-center gap-3 rounded-xl py-3 text-sm font-semibold transition-all group relative",
                 isCollapsed ? "justify-center px-0" : "px-3.5",
                 active
-                  ? "bg-primary/15 text-primary border border-primary/30 font-semibold"
+                  ? "bg-[#520051]/10 text-[#520051] dark:bg-[#520051] dark:text-[#fde8fc] border border-[#520051]/20 font-bold shadow-2xs"
                   : "text-ink-muted hover:bg-surface-2 hover:text-ink"
               )}
             >
@@ -115,14 +115,14 @@ export function Sidebar({ isCollapsed = false, onToggleCollapse }: SidebarProps)
                 size={19}
                 className={cn(
                   "shrink-0 transition-transform group-hover:scale-110",
-                  active ? "text-primary" : "text-ink-muted"
+                  active ? "text-[#920090] dark:text-[#f14df0]" : "text-ink-muted"
                 )}
               />
               {!isCollapsed && <span className="truncate">{item.label}</span>}
 
               {/* Tooltip on collapsed state */}
               {isCollapsed && (
-                <div className="absolute left-full ml-2.5 hidden rounded-[4px] bg-ink px-2.5 py-1 text-xs font-mono text-bg shadow-md group-hover:block z-50 whitespace-nowrap">
+                <div className="absolute left-full ml-3 hidden rounded-xl bg-ink px-3 py-1.5 text-xs font-mono text-bg shadow-xl group-hover:block z-50 whitespace-nowrap">
                   {item.label}
                 </div>
               )}
@@ -132,21 +132,21 @@ export function Sidebar({ isCollapsed = false, onToggleCollapse }: SidebarProps)
       </nav>
 
       {/* Sidebar Footer */}
-      <div className="border-t border-border p-3">
+      <div className="border-t border-border/80 p-3">
         <Link
           href="/profile"
           className={cn(
-            "flex items-center rounded-[4px] bg-surface-2 border border-border transition-colors hover:border-border-hover",
+            "flex items-center rounded-xl bg-surface-2 border border-border/80 transition-all hover:border-[#920090]/40",
             isCollapsed ? "justify-center p-2" : "gap-3 p-2.5"
           )}
           title={isCollapsed ? `${displayName} (Profile)` : undefined}
         >
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-mono font-bold text-primary-fg ring-2 ring-primary/20">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#520051] text-xs font-mono font-bold text-white ring-2 ring-[#920090]/30 shadow-xs">
             {initials}
           </div>
           {!isCollapsed && (
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-ink">{displayName}</p>
+              <p className="truncate text-sm font-bold text-ink">{displayName}</p>
               <p className="truncate text-xs font-mono text-ink-muted">Level {userLevel} · Member</p>
             </div>
           )}

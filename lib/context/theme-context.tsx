@@ -19,7 +19,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setMounted(true);
-    const savedTheme = localStorage.getItem("unigap-theme") as Theme | null;
+    const savedTheme = localStorage.getItem("UNIGAP Learn-theme") as Theme | null;
     if (savedTheme === "dark" || savedTheme === "light") {
       setThemeState(savedTheme);
       applyTheme(savedTheme);
@@ -41,7 +41,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
-    localStorage.setItem("unigap-theme", newTheme);
+    localStorage.setItem("UNIGAP Learn-theme", newTheme);
     applyTheme(newTheme);
   };
 

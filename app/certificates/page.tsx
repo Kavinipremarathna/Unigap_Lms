@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { SubpageHeroHeader } from "@/components/ui/subpage-hero-header";
 import { CertificateModal, CertificateData } from "@/components/certificates/certificate-modal";
 
+import { getUserCertificates } from "@/lib/services/certificate-template";
+
 const NESTJS_API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
 export default function CertificatesPage() {
@@ -16,6 +18,14 @@ export default function CertificatesPage() {
   const [certificates, setCertificates] = useState<CertificateData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const loadLocalCertificates = () => {
+    const localCerts = getUserCertificates();
+    if (localCerts && localCerts.length > 0) {
+      setCertificates(localCerts as any[]);
+      setError(null);
+    }
+  };
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -39,24 +49,38 @@ export default function CertificatesPage() {
     async function fetchCertificates() {
       setLoading(true);
       setError(null);
+
       try {
-        const token = localStorage.getItem("unigap_auth_token") || "";
-        const res = await fetch(`${NESTJS_API_URL}/certificates/my`, {
-          headers: { Authorization: `Bearer ${token}` },
-          credentials: "include",
-        });
-        if (!res.ok) throw new Error(`Server returned ${res.status}`);
-        const data: CertificateData[] = await res.json();
-        setCertificates(data);
+        const authUserStr = localStorage.getItem("unigap_auth_user");
+        let userEmail = "";
+        if (authUserStr) {
+          const authUser = JSON.parse(authUserStr);
+          userEmail = authUser.email || "";
+        }
+
+        const endpoint = userEmail ? `/api/certificates?email=${encodeURIComponent(userEmail)}` : "/api/certificates";
+        const res = await fetch(endpoint);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.certificates) && data.certificates.length > 0) {
+            setCertificates(data.certificates);
+            setLoading(false);
+            return;
+          }
+        }
       } catch (err: any) {
-        setError("Could not load certificates. Please try again later.");
-        setCertificates([]);
-      } finally {
-        setLoading(false);
+        // Fallback to local
       }
+
+      loadLocalCertificates();
+      setLoading(false);
     }
 
     fetchCertificates();
+    window.addEventListener("unigap_certificates_updated", fetchCertificates);
+    return () => {
+      window.removeEventListener("unigap_certificates_updated", fetchCertificates);
+    };
   }, []);
 
   return (
@@ -74,36 +98,7 @@ export default function CertificatesPage() {
         }
       />
 
-      {/* Admin Notice Banner */}
-      {isAdminRole && (
-        <div className="mt-6 rounded-2xl border border-purple-200 bg-gradient-to-r from-purple-50 via-white to-purple-50 p-6 shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#520051] text-white">
-                <ShieldCheck size={20} />
-              </div>
-              <div>
-                <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-[#920090] uppercase tracking-wider">
-                  <Info size={12} /> Administrator Role Notice
-                </span>
-                <h3 className="font-bold text-base text-[#520051]">
-                  Certificates are issued exclusively to enrolled Students
-                </h3>
-                <p className="mt-1 text-xs leading-relaxed text-slate-600">
-                  Super Admin and Admin accounts oversee platform operations. To manage, issue, or verify student course certificates, use the central Admin Registry.
-                </p>
-              </div>
-            </div>
 
-            <Link
-              href="/admin/certificates"
-              className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-[#520051] px-5 py-2.5 text-xs font-bold text-white shadow-md hover:bg-[#920090] transition"
-            >
-              <UserCheck size={16} /> Open Admin Certificate Registry <ArrowRight size={15} />
-            </Link>
-          </div>
-        </div>
-      )}
 
       {/* Section Header */}
       <div className="mt-8 flex items-center justify-between">

@@ -18,7 +18,7 @@ export default function AdminPricingPage() {
   const [plans, setPlans] = useState(pricingPlans);
   const [coupons, setCoupons] = useState([
     { code: "WELCOME50", discount: "50% OFF", uses: 142, status: "Active", expires: "2026-12-31" },
-    { code: "UNIGAP2026", discount: "20% OFF", uses: 89, status: "Active", expires: "2026-09-30" },
+    { code: "UNIGAP Learn Learn2026", discount: "20% OFF", uses: 89, status: "Active", expires: "2026-09-30" },
     { code: "PROSUMMER", discount: "30% OFF", uses: 45, status: "Expired", expires: "2026-07-01" },
   ]);
 
@@ -122,11 +122,10 @@ export default function AdminPricingPage() {
                     <td className="px-6 py-4 text-xs text-slate-500">{c.expires}</td>
                     <td className="px-6 py-4">
                       <span
-                        className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                          c.status === "Active"
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-slate-100 text-slate-500"
-                        }`}
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${c.status === "Active"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-slate-100 text-slate-500"
+                          }`}
                       >
                         {c.status}
                       </span>

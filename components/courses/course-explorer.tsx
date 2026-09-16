@@ -155,9 +155,9 @@ export function CourseExplorer({ variant = "public" }: CourseExplorerProps) {
 
 
       {/* Search & Control Bar */}
-      <div className={cn("mt-8 space-y-4", isDashboard && "mt-6")}>
-        <div className="relative flex items-center rounded-[4px] border border-border bg-surface px-4 py-3 shadow-sm transition-all focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
-          <Search size={18} className="text-ink-muted shrink-0" />
+      <div className={cn("mt-8 space-y-5", isDashboard && "mt-6")}>
+        <div className="relative flex items-center rounded-2xl border border-border/80 bg-surface px-4 py-3.5 shadow-sm transition-all focus-within:border-[#920090] focus-within:ring-2 focus-within:ring-[#920090]/20">
+          <Search size={18} className="text-[#920090] shrink-0 dark:text-[#f14df0]" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -169,7 +169,7 @@ export function CourseExplorer({ variant = "public" }: CourseExplorerProps) {
             <button
               type="button"
               onClick={() => setQuery("")}
-              className="rounded-[4px] p-1 text-ink-muted hover:bg-surface-2 hover:text-ink"
+              className="rounded-xl p-1 text-ink-muted hover:bg-surface-2 hover:text-ink"
               aria-label="Clear search"
             >
               <X size={16} />
@@ -183,10 +183,10 @@ export function CourseExplorer({ variant = "public" }: CourseExplorerProps) {
             type="button"
             onClick={() => setCategory(null)}
             className={cn(
-              "rounded-[4px] px-3.5 py-1.5 text-xs font-mono font-medium transition",
+              "rounded-full px-4 py-2 text-xs font-mono font-bold transition cursor-pointer",
               category === null
-                ? "bg-primary text-primary-fg font-semibold"
-                : "bg-surface border border-border text-ink-muted hover:bg-surface-2 hover:text-ink"
+                ? "bg-[#520051] text-white shadow-xs dark:bg-[#920090]"
+                : "bg-surface border border-border/80 text-ink-muted hover:bg-surface-2 hover:text-ink"
             )}
           >
             All Categories ({allCourses.length})
@@ -200,17 +200,17 @@ export function CourseExplorer({ variant = "public" }: CourseExplorerProps) {
                 type="button"
                 onClick={() => setCategory(isSelected ? null : c)}
                 className={cn(
-                  "rounded-[4px] px-3.5 py-1.5 text-xs font-mono font-medium transition flex items-center gap-1.5",
+                  "rounded-full px-4 py-2 text-xs font-mono font-bold transition flex items-center gap-2 cursor-pointer",
                   isSelected
-                    ? "bg-primary text-primary-fg font-semibold"
-                    : "bg-surface border border-border text-ink-muted hover:bg-surface-2 hover:text-ink"
+                    ? "bg-[#520051] text-white shadow-xs dark:bg-[#920090]"
+                    : "bg-surface border border-border/80 text-ink-muted hover:bg-surface-2 hover:text-ink"
                 )}
               >
                 <span>{c}</span>
                 <span
                   className={cn(
-                    "rounded-full px-1.5 py-0.2 text-[10px]",
-                    isSelected ? "bg-primary-fg/20 text-primary-fg" : "bg-surface-2 text-ink-muted"
+                    "rounded-full px-2 py-0.5 text-[10px] font-extrabold",
+                    isSelected ? "bg-white/20 text-white" : "bg-surface-2 text-ink-muted"
                   )}
                 >
                   {count}
@@ -221,12 +221,12 @@ export function CourseExplorer({ variant = "public" }: CourseExplorerProps) {
         </div>
 
         {/* Results Header */}
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-b border-border/80 pb-4">
           <div className="flex items-center gap-2">
-            <p className="font-serif text-base font-medium text-ink">
+            <p className="font-heading text-lg font-bold text-ink">
               {category ? `${category} Courses` : "All Courses"}
             </p>
-            <Badge variant="default" className="text-xs">
+            <Badge variant="default" className="text-xs rounded-full px-3 py-0.5">
               {filtered.length} {filtered.length === 1 ? "course" : "courses"}
             </Badge>
           </div>
@@ -241,7 +241,7 @@ export function CourseExplorer({ variant = "public" }: CourseExplorerProps) {
         {/* Secondary Filters & Sorter */}
         <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-mono text-ink-muted">Level:</span>
+            <span className="text-xs font-mono font-bold text-ink-muted">Level:</span>
             {levels.map((l) => {
               const isSelected = level === l;
               return (
@@ -250,10 +250,10 @@ export function CourseExplorer({ variant = "public" }: CourseExplorerProps) {
                   type="button"
                   onClick={() => setLevel(isSelected ? null : l)}
                   className={cn(
-                    "rounded-[4px] border px-3 py-1.5 text-xs font-mono font-medium transition",
+                    "rounded-xl border px-3.5 py-1.5 text-xs font-mono font-bold transition cursor-pointer",
                     isSelected
-                      ? "border-primary bg-primary/15 text-primary"
-                      : "border-border bg-surface text-ink-muted hover:bg-surface-2 hover:text-ink"
+                      ? "border-[#920090] bg-[#520051]/10 text-[#520051] dark:bg-[#520051] dark:text-[#fde8fc]"
+                      : "border-border/80 bg-surface text-ink-muted hover:bg-surface-2 hover:text-ink"
                   )}
                 >
                   {l}
@@ -265,7 +265,7 @@ export function CourseExplorer({ variant = "public" }: CourseExplorerProps) {
               <button
                 type="button"
                 onClick={resetFilters}
-                className="inline-flex items-center gap-1 rounded-[4px] border border-dashed border-border px-2.5 py-1.5 text-xs font-mono text-ink-muted transition hover:border-red-500/50 hover:text-red-500"
+                className="inline-flex items-center gap-1 rounded-xl border border-dashed border-border px-3 py-1.5 text-xs font-mono text-ink-muted transition hover:border-red-500/50 hover:text-red-500 cursor-pointer"
               >
                 <X size={13} /> Reset filters
               </button>
@@ -278,7 +278,7 @@ export function CourseExplorer({ variant = "public" }: CourseExplorerProps) {
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value as Sort)}
-                className="rounded-[4px] border border-border bg-surface px-3 py-1.5 text-xs font-mono text-ink focus:border-primary focus:outline-none"
+                className="rounded-xl border border-border/80 bg-surface px-3.5 py-2 text-xs font-mono font-semibold text-ink focus:border-[#920090] focus:outline-none cursor-pointer"
                 aria-label="Sort courses"
               >
                 <option value="popular" className="bg-surface text-ink">Most Popular</option>

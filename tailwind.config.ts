@@ -58,9 +58,10 @@ const config: Config = {
         glow: "0 0 0 2px #C79D5D",
       },
       fontFamily: {
-        sans: ["var(--font-sans)", "Inter", "system-ui", "sans-serif"],
-        serif: ["var(--font-serif)", "Fraunces", "Georgia", "serif"],
-        mono: ["var(--font-mono)", "IBM Plex Mono", "monospace"],
+        sans: ["var(--font-sans)", "Montserrat", "Calibri", "sans-serif"],
+        heading: ["var(--font-heading)", "Raleway", "sans-serif"],
+        serif: ["var(--font-serif)", "var(--font-heading)", "Raleway", "Montserrat", "sans-serif"],
+        mono: ["var(--font-mono)", "JetBrains Mono", "monospace"],
       },
       keyframes: {
         "fade-up": {

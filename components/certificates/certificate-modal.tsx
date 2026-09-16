@@ -1,7 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { Award, ShieldCheck, Printer, Download, Copy, Check, X, GraduationCap } from "lucide-react";
+import {
+  Award,
+  ShieldCheck,
+  Printer,
+  Download,
+  Copy,
+  Check,
+  X,
+  GraduationCap,
+  Medal,
+  Star,
+} from "lucide-react";
+import {
+  CertificateTemplateConfig,
+  DEFAULT_CERTIFICATE_TEMPLATE,
+  getCertificateTemplate,
+} from "@/lib/services/certificate-template";
 
 export interface CertificateData {
   id: string;
@@ -12,6 +28,7 @@ export interface CertificateData {
   issueDate: string;
   grade?: string;
   instructorName?: string;
+  templateConfig?: CertificateTemplateConfig;
 }
 
 interface CertificateModalProps {
@@ -24,6 +41,9 @@ export function CertificateModal({ certificate, onClose }: CertificateModalProps
   const [downloading, setDownloading] = useState(false);
 
   if (!certificate) return null;
+
+  const tConfig: CertificateTemplateConfig =
+    certificate.templateConfig || getCertificateTemplate();
 
   const handlePrint = () => {
     window.print();
@@ -78,6 +98,71 @@ export function CertificateModal({ certificate, onClose }: CertificateModalProps
     setTimeout(() => setCopied(false), 2500);
   };
 
+  const themeStyles = {
+    parchment: {
+      outerBorder: "border-[#6b5f4f]",
+      cornerBorder: "border-[#8c7b64]",
+      bg: "bg-[#f7f4eb]",
+      accentText: "text-[#5c5346]",
+      headerText: "text-[#3b352b]",
+      badgeBg: "bg-[#5c5346]",
+      sealBg: "bg-[#8c7b64] text-[#fffdfa] border-[#5c5346]",
+    },
+    purple: {
+      outerBorder: "border-[#520051]",
+      cornerBorder: "border-[#920090]",
+      bg: "bg-[#faf7fb]",
+      accentText: "text-[#920090]",
+      headerText: "text-[#520051]",
+      badgeBg: "bg-[#520051]",
+      sealBg: "bg-purple-100 text-[#520051] border-purple-300",
+    },
+    gold: {
+      outerBorder: "border-amber-600",
+      cornerBorder: "border-amber-500",
+      bg: "bg-[#fffdf7]",
+      accentText: "text-amber-600",
+      headerText: "text-amber-900",
+      badgeBg: "bg-amber-700",
+      sealBg: "bg-amber-100 text-amber-800 border-amber-300",
+    },
+    emerald: {
+      outerBorder: "border-emerald-700",
+      cornerBorder: "border-emerald-500",
+      bg: "bg-[#f6fbf8]",
+      accentText: "text-emerald-600",
+      headerText: "text-emerald-950",
+      badgeBg: "bg-emerald-800",
+      sealBg: "bg-emerald-100 text-emerald-800 border-emerald-300",
+    },
+    navy: {
+      outerBorder: "border-slate-800",
+      cornerBorder: "border-blue-600",
+      bg: "bg-[#f8fafc]",
+      accentText: "text-blue-600",
+      headerText: "text-slate-900",
+      badgeBg: "bg-slate-900",
+      sealBg: "bg-blue-100 text-blue-900 border-blue-300",
+    },
+    slate: {
+      outerBorder: "border-zinc-700",
+      cornerBorder: "border-zinc-500",
+      bg: "bg-[#fafafa]",
+      accentText: "text-zinc-600",
+      headerText: "text-zinc-900",
+      badgeBg: "bg-zinc-800",
+      sealBg: "bg-zinc-200 text-zinc-800 border-zinc-300",
+    },
+  }[tConfig.theme || "parchment"] || {
+    outerBorder: "border-[#6b5f4f]",
+    cornerBorder: "border-[#8c7b64]",
+    bg: "bg-[#f7f4eb]",
+    accentText: "text-[#5c5346]",
+    headerText: "text-[#3b352b]",
+    badgeBg: "bg-[#5c5346]",
+    sealBg: "bg-[#8c7b64] text-[#fffdfa] border-[#5c5346]",
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-md overflow-y-auto">
       <div className="relative w-full max-w-4xl rounded-3xl bg-white p-2 shadow-2xl my-auto">
@@ -89,7 +174,7 @@ export function CertificateModal({ certificate, onClose }: CertificateModalProps
             </span>
             <div>
               <h3 className="text-sm font-bold text-[#520051]">Official Digital Certificate</h3>
-              <p className="text-xs text-slate-500">Verified by UNIGAP LMS Credential Engine</p>
+              <p className="text-xs text-slate-500">Verified by UNIGAP Learn Credential Engine</p>
             </div>
           </div>
 
@@ -133,79 +218,120 @@ export function CertificateModal({ certificate, onClose }: CertificateModalProps
         {/* Printable Certificate Frame Canvas */}
         <div
           id="certificate-print-area"
-          className="relative m-2 overflow-hidden rounded-2xl border-8 border-[#520051] bg-[#faf7fb] p-8 text-slate-900 shadow-inner sm:p-12 print:m-0 print:border-8 print:p-8"
+          className="relative m-2 overflow-hidden rounded-xl border-[10px] border-[#8c7b64] bg-[#f6f3ea] p-8 text-[#3b352b] shadow-inner sm:p-12 print:m-0 print:border-[10px] print:p-8 font-serif select-none"
+          style={{
+            backgroundImage: "radial-gradient(#e8e2d2 1px, transparent 1px)",
+            backgroundSize: "24px 24px",
+          }}
         >
-          {/* Decorative Corner Borders */}
-          <div className="absolute top-3 left-3 h-12 w-12 border-t-4 border-l-4 border-[#920090]" />
-          <div className="absolute top-3 right-3 h-12 w-12 border-t-4 border-r-4 border-[#920090]" />
-          <div className="absolute bottom-3 left-3 h-12 w-12 border-b-4 border-l-4 border-[#920090]" />
-          <div className="absolute bottom-3 right-3 h-12 w-12 border-b-4 border-r-4 border-[#920090]" />
+          {/* Multi-line Guilloche Frame Border */}
+          <div className="pointer-events-none absolute inset-2 rounded-lg border-2 border-[#5c5346]/40 p-1">
+            <div className="h-full w-full rounded-md border border-[#8c7b64]/30" />
+          </div>
+
+          {/* Ornate Filigree Corner Accents */}
+          <div className="absolute top-4 left-4 text-[#6b5f4f] text-2xl font-serif leading-none select-none">
+            ❦
+          </div>
+          <div className="absolute top-4 right-4 text-[#6b5f4f] text-2xl font-serif leading-none select-none">
+            ❦
+          </div>
+          <div className="absolute bottom-4 left-4 text-[#6b5f4f] text-2xl font-serif leading-none select-none">
+            ❦
+          </div>
+          <div className="absolute bottom-4 right-4 text-[#6b5f4f] text-2xl font-serif leading-none select-none">
+            ❦
+          </div>
 
           {/* Certificate Header */}
-          <div className="text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#520051] to-[#920090] text-white shadow-md">
-              <GraduationCap size={36} />
+          <div className="text-center space-y-1 mt-2">
+            <p className="text-sm font-serif text-[#5c5346] tracking-wider uppercase font-semibold">
+              {tConfig.institutionName || "UNIGAP Learn"}
+            </p>
+
+            {/* Scrollwork Divider Line 1 */}
+            <div className="flex items-center justify-center gap-3 text-[#8c7b64] text-xs my-1">
+              <span className="h-[1px] w-32 bg-[#8c7b64]" />
+              <span className="text-sm">❦</span>
+              <span className="h-[1px] w-32 bg-[#8c7b64]" />
             </div>
 
-            <p className="mt-4 text-xs font-extrabold uppercase tracking-[0.25em] text-[#920090]">
-              UNIGAP ACADEMY OF ADVANCED LEARNING
-            </p>
-            <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-[#520051] sm:text-4xl">
-              Certificate of Completion
+            <h1 className="font-serif text-3xl sm:text-5xl font-black tracking-[0.2em] text-[#2c261e] uppercase py-1">
+              {tConfig.certificateTitle || "CERTIFICATE"}
             </h1>
-            <div className="mx-auto mt-2 h-1 w-24 rounded-full bg-gradient-to-r from-[#520051] via-[#920090] to-[#520051]" />
+
+            {/* Scrollwork Divider Line 2 */}
+            <div className="flex items-center justify-center gap-3 text-[#8c7b64] text-xs my-1">
+              <span className="h-[1px] w-32 bg-[#8c7b64]" />
+              <span className="text-sm">❦</span>
+              <span className="h-[1px] w-32 bg-[#8c7b64]" />
+            </div>
+
+            <p className="font-serif text-xs sm:text-sm font-bold tracking-[0.35em] uppercase text-[#6b5f4f] pt-1">
+              {tConfig.subTitle || "OF AUTHENTICITY"}
+            </p>
           </div>
 
           {/* Recipient Details */}
-          <div className="mt-8 text-center">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              THIS IS PROUDLY PRESENTED TO
+          <div className="mt-8 text-center space-y-4">
+            <p className="text-xs font-serif font-bold uppercase tracking-[0.2em] text-[#6b5f4f]">
+              {tConfig.presentationText || "THIS CERTIFICATE IS PROUDLY PRESENTED TO"}
             </p>
 
-            {/* ENROLLED STUDENT NAME */}
-            <h2 className="mt-3 text-3xl font-black text-[#520051] sm:text-4xl underline decoration-[#920090]/40 underline-offset-8">
-              {certificate.recipientName}
-            </h2>
+            {/* ENROLLED STUDENT NAME ON BASELINE UNDERLINE */}
+            <div className="relative inline-block min-w-[280px] sm:min-w-[380px] border-b-2 border-[#5c5346] pb-1 px-8">
+              <h2 className="font-serif text-3xl sm:text-4xl font-black text-[#1e1914] tracking-wide">
+                {certificate.recipientName}
+              </h2>
+            </div>
 
-            <p className="mt-6 mx-auto max-w-xl text-xs leading-relaxed text-slate-600 sm:text-sm">
-              for successfully completing all curriculum modules, practical assessments, and academic evaluations for the course:
-            </p>
-
-            {/* COURSE TITLE */}
-            <div className="mt-4 inline-block rounded-2xl bg-[#520051] px-6 py-3 text-white shadow-md">
-              <h3 className="text-lg font-bold sm:text-xl">{certificate.courseTitle}</h3>
+            {/* Completion Statement Paragraph */}
+            <div className="mx-auto max-w-lg text-xs leading-relaxed text-[#5c5346] font-serif space-y-1">
+              <p>
+                {tConfig.completionStatement ||
+                  "for successfully completing all curriculum modules, practical assessments, and academic evaluations for the course:"}
+              </p>
+              <p className="text-sm font-bold text-[#2a251e] pt-1 italic font-serif">
+                "{certificate.courseTitle}"
+              </p>
+              {certificate.grade && (
+                <p className="text-[11px] font-bold text-amber-900 bg-amber-100/80 inline-block px-3 py-0.5 rounded-full border border-amber-300 mt-1">
+                  Grade Distinction: {certificate.grade}
+                </p>
+              )}
             </div>
           </div>
 
-          {/* Certificate Footer Meta */}
-          <div className="mt-10 grid grid-cols-3 items-end border-t border-[#e8dce8] pt-6 text-center text-xs">
-            {/* Verification Seal */}
-            <div className="flex flex-col items-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-700 shadow-sm border border-amber-300">
-                <ShieldCheck size={26} />
+          {/* Certificate Footer Meta: Left Date Line | Central Rosette Ribbon Seal | Right Signature Line */}
+          <div className="mt-12 grid grid-cols-3 items-end pt-2 text-center font-serif text-xs">
+            {/* Left Date Line */}
+            <div className="space-y-1 text-center">
+              <div className="mx-auto w-36 sm:w-44 border-b border-[#5c5346] pb-1 font-bold text-xs text-[#2a251e]">
+                {certificate.issueDate}
               </div>
-              <span className="mt-1 text-[11px] font-bold text-[#520051]">UNIGAP Verified Credential</span>
-              <span className="font-mono text-[10px] text-slate-500">{certificate.certificateHash}</span>
+              <p className="text-[11px] font-bold text-[#6b5f4f] uppercase tracking-wider">Date</p>
             </div>
 
-            {/* Issued Date & Score */}
-            <div className="space-y-1">
-              <p className="text-[11px] text-slate-500 uppercase tracking-wider">Date Issued</p>
-              <p className="font-bold text-sm text-[#520051]">{certificate.issueDate}</p>
-              {certificate.grade && (
-                <span className="inline-block rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800">
-                  Grade: {certificate.grade}
-                </span>
-              )}
+            {/* Center Ribboned Rosette Seal */}
+            <div className="flex flex-col items-center relative -bottom-2">
+              <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#a39478] via-[#8c7b64] to-[#5c5346] text-[#fffdfa] shadow-lg border-2 border-[#f6f3ea] ring-4 ring-[#8c7b64]/30">
+                <div className="absolute inset-1 rounded-full border border-dashed border-[#f6f3ea]/60" />
+                <Medal size={28} className="text-amber-100" />
+                {/* Ribbon Tails */}
+                <div className="absolute -bottom-3 left-3 w-3 h-5 bg-[#5c5346] rotate-12 -z-10 rounded-b-sm" />
+                <div className="absolute -bottom-3 right-3 w-3 h-5 bg-[#5c5346] -rotate-12 -z-10 rounded-b-sm" />
+              </div>
+              <span className="mt-3 text-[9px] font-bold text-[#6b5f4f] uppercase tracking-widest font-mono">
+                {certificate.certificateHash}
+              </span>
             </div>
 
-            {/* Instructor / Academic Signature */}
-            <div className="space-y-1 text-right sm:text-center">
-              <div className="mx-auto h-8 w-32 border-b-2 border-slate-400 font-serif italic text-slate-700 text-sm flex items-end justify-center">
-                {certificate.instructorName || "Academic Director"}
+            {/* Right Signature Line */}
+            <div className="space-y-1 text-center">
+              <div className="mx-auto w-36 sm:w-44 border-b border-[#5c5346] pb-1 font-serif italic text-sm text-[#2a251e] font-bold">
+                {tConfig.signatoryName || certificate.instructorName || "Dr. Alexander Reed"}
               </div>
-              <p className="text-[11px] font-bold text-[#520051]">Authorized Signature</p>
-              <p className="text-[10px] text-slate-400">UNIGAP Academic Council</p>
+              <p className="text-[11px] font-bold text-[#6b5f4f] uppercase tracking-wider">Signature</p>
             </div>
           </div>
         </div>
@@ -213,3 +339,4 @@ export function CertificateModal({ certificate, onClose }: CertificateModalProps
     </div>
   );
 }
+

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   Award,
   Search,
@@ -11,6 +12,9 @@ import {
   X,
   FileCheck,
   Eye,
+  Sliders,
+  Pencil,
+  Save,
 } from "lucide-react";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { getStoredCertificates, IssuedCertificate } from "@/lib/mock/admin";
@@ -24,7 +28,7 @@ const defaultMockCertificates: IssuedCertificate[] = [
     recipientEmail: "kkgpremarathna@gmail.com",
     courseTitle: "JavaScript & TypeScript Mastery 2026",
     issueDate: "August 28, 2026",
-    grade: "Distinction (98%)",
+    grade: "Excellent (Distinction - 95%)",
     status: "valid",
   },
   {
@@ -34,7 +38,7 @@ const defaultMockCertificates: IssuedCertificate[] = [
     recipientEmail: "alex.rivera@unigap.edu",
     courseTitle: "Fullstack Next.js & React Masterclass",
     issueDate: "August 20, 2026",
-    grade: "Pass (92%)",
+    grade: "Pass (Good - 68%)",
     status: "valid",
   },
   {
@@ -44,7 +48,7 @@ const defaultMockCertificates: IssuedCertificate[] = [
     recipientEmail: "sarah.chen@unigap.edu",
     courseTitle: "Python Data Science & Machine Learning",
     issueDate: "August 15, 2026",
-    grade: "Distinction (99%)",
+    grade: "Excellent (Distinction - 99%)",
     status: "valid",
   },
 ];
@@ -54,12 +58,8 @@ export default function AdminCertificatesPage() {
   const [search, setSearch] = useState("");
   const [verifyInput, setVerifyInput] = useState("");
   const [verifyResult, setVerifyResult] = useState<IssuedCertificate | null | "not_found">(null);
-  const [showIssueModal, setShowIssueModal] = useState(false);
   const [selectedPreviewCert, setSelectedPreviewCert] = useState<CertificateData | null>(null);
-
-  const [newRecipientName, setNewRecipientName] = useState("");
-  const [newRecipientEmail, setNewRecipientEmail] = useState("");
-  const [newCourseTitle, setNewCourseTitle] = useState("");
+  const [editingCert, setEditingCert] = useState<IssuedCertificate | null>(null);
 
   const loadCertificates = () => {
     const stored = getStoredCertificates();
@@ -90,36 +90,19 @@ export default function AdminCertificatesPage() {
     setVerifyResult(found || "not_found");
   };
 
-  const handleIssueCertificate = (e: React.FormEvent) => {
+  const handleSaveEditedCert = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newRecipientName.trim() || !newCourseTitle.trim()) return;
-
-    const created: IssuedCertificate = {
-      id: `cert-${Date.now()}`,
-      certificateHash: `UNI-CERT-2026-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
-      recipientName: newRecipientName.trim(),
-      recipientEmail: newRecipientEmail.trim() || "learner@unigap.edu",
-      courseTitle: newCourseTitle.trim(),
-      issueDate: new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
-      grade: "Distinction",
-      status: "valid",
-    };
-
-    const updated = [created, ...certificates];
-    setCertificates(updated);
+    if (!editingCert) return;
+    const updatedList = certificates.map((c) => (c.id === editingCert.id ? editingCert : c));
+    setCertificates(updatedList);
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem("unigap_admin_certificates", JSON.stringify(updated));
+        localStorage.setItem("unigap_admin_certificates", JSON.stringify(updatedList));
       } catch {
         // ignore
       }
     }
-
-    setNewRecipientName("");
-    setNewRecipientEmail("");
-    setNewCourseTitle("");
-    setShowIssueModal(false);
-    setSelectedPreviewCert(created);
+    setEditingCert(null);
   };
 
   return (
@@ -131,17 +114,16 @@ export default function AdminCertificatesPage() {
             <p className="text-sm font-semibold text-[#920090]">Credentials Registry</p>
             <h1 className="mt-1 text-3xl font-bold text-[#520051]">Issued Certificates</h1>
             <p className="mt-1 text-sm text-slate-500">
-              Manage course completion credentials with enrolled student names and course titles.
+              View, edit, and verify official course completion credentials earned automatically by learners.
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setShowIssueModal(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#520051] px-4 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#920090] cursor-pointer"
+          <Link
+            href="/admin/certificates/design"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#520051] px-4.5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#920090] transition cursor-pointer active:scale-95"
           >
-            <Plus size={16} /> Issue Custom Certificate
-          </button>
+            <Sliders size={16} /> Design Certificate Template
+          </Link>
         </div>
 
         {/* Verification Checker Bar */}
@@ -222,7 +204,7 @@ export default function AdminCertificatesPage() {
                     <th className="px-6 py-4">Enrolled Student Name</th>
                     <th className="px-6 py-4">Course Title</th>
                     <th className="px-6 py-4">Issue Date</th>
-                    <th className="px-6 py-4">Grade</th>
+                    <th className="px-6 py-4">Grade Distinction</th>
                     <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -242,18 +224,35 @@ export default function AdminCertificatesPage() {
                       </td>
                       <td className="px-6 py-4 font-bold text-[#520051]">{cert.courseTitle}</td>
                       <td className="px-6 py-4 text-xs text-slate-500">{cert.issueDate}</td>
-                      <td className="px-6 py-4 font-semibold text-emerald-600">{cert.grade}</td>
-                      <td className="px-6 py-4 text-right">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedPreviewCert(cert);
-                          }}
-                          className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-[#520051] hover:bg-[#fde8fc] hover:border-[#920090]"
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                            (cert.grade || "").toLowerCase().includes("excellent")
+                              ? "bg-purple-100 text-[#520051] border border-purple-200"
+                              : "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                          }`}
                         >
-                          <Eye size={14} /> View Certificate
-                        </button>
+                          {cert.grade || "Pass"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            onClick={() => setEditingCert({ ...cert })}
+                            className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                            title="Edit Certificate Details"
+                          >
+                            <Pencil size={13} /> Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedPreviewCert(cert)}
+                            className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-[#520051] hover:bg-[#fde8fc] hover:border-[#920090] cursor-pointer"
+                          >
+                            <Eye size={14} /> View
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -265,75 +264,114 @@ export default function AdminCertificatesPage() {
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#faf5fa] text-[#520051]">
                 <FileCheck size={24} />
               </div>
-              <h3 className="mt-4 text-base font-bold text-[#520051]">No Certificates Found</h3>
+              <h3 className="mt-4 text-base font-bold text-[#520051]">No Issued Certificates Found</h3>
               <p className="mt-1 text-xs text-slate-500">
-                Issue a custom certificate using the button above.
+                Certificates will appear here automatically as learners complete courses.
               </p>
             </div>
           )}
         </div>
 
-        {/* Issue Custom Certificate Modal */}
-        {showIssueModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs">
-            <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
+        {/* Edit Certificate Modal */}
+        {editingCert && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs animate-in fade-in">
+            <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 className="text-lg font-bold text-[#520051]">Issue Official Certificate</h3>
+                <div className="flex items-center gap-2">
+                  <Pencil size={18} className="text-[#920090]" />
+                  <h3 className="text-base font-bold text-[#520051]">Edit Certificate Credentials</h3>
+                </div>
                 <button
                   type="button"
-                  onClick={() => setShowIssueModal(false)}
-                  className="rounded-lg p-1 text-slate-400"
+                  onClick={() => setEditingCert(null)}
+                  className="rounded-lg p-1 text-slate-400 hover:text-slate-600"
                 >
                   <X size={18} />
                 </button>
               </div>
 
-              <form onSubmit={handleIssueCertificate} className="mt-4 space-y-3">
+              <form onSubmit={handleSaveEditedCert} className="space-y-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-700">Enrolled Student Full Name</label>
+                  <label className="text-xs font-bold text-slate-700">Student Full Name</label>
                   <input
-                    required
                     type="text"
-                    value={newRecipientName}
-                    onChange={(e) => setNewRecipientName(e.target.value)}
-                    placeholder="e.g. Jordan Diaz or Kavini Gavesha"
-                    className="w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none focus:border-[#920090]"
+                    value={editingCert.recipientName}
+                    onChange={(e) => setEditingCert({ ...editingCert, recipientName: e.target.value })}
+                    className="mt-1 w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none focus:border-[#920090]"
+                    required
                   />
                 </div>
+
                 <div>
                   <label className="text-xs font-bold text-slate-700">Student Email Address</label>
                   <input
                     type="email"
-                    value={newRecipientEmail}
-                    onChange={(e) => setNewRecipientEmail(e.target.value)}
-                    placeholder="e.g. student@unigap.edu"
-                    className="w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none focus:border-[#920090]"
+                    value={editingCert.recipientEmail || ""}
+                    onChange={(e) => setEditingCert({ ...editingCert, recipientEmail: e.target.value })}
+                    className="mt-1 w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none focus:border-[#920090]"
                   />
                 </div>
+
                 <div>
                   <label className="text-xs font-bold text-slate-700">Course Title</label>
                   <input
-                    required
                     type="text"
-                    value={newCourseTitle}
-                    onChange={(e) => setNewCourseTitle(e.target.value)}
-                    placeholder="e.g. JavaScript & TypeScript Mastery 2026"
-                    className="w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none focus:border-[#920090]"
+                    value={editingCert.courseTitle}
+                    onChange={(e) => setEditingCert({ ...editingCert, courseTitle: e.target.value })}
+                    className="mt-1 w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none focus:border-[#920090]"
+                    required
                   />
                 </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-700">Grade / Distinction Wording</label>
+                  <input
+                    type="text"
+                    value={editingCert.grade || ""}
+                    onChange={(e) => setEditingCert({ ...editingCert, grade: e.target.value })}
+                    className="mt-1 w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none focus:border-[#920090]"
+                  />
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setEditingCert({ ...editingCert, grade: "Excellent (Distinction - 95%)" })}
+                      className="rounded-lg bg-purple-50 px-2 py-1 text-[10px] font-bold text-[#520051] border border-purple-200"
+                    >
+                      + Excellent (75%+)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditingCert({ ...editingCert, grade: "Pass (Good - 65%)" })}
+                      className="rounded-lg bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-800 border border-emerald-200"
+                    >
+                      + Pass (50-74%)
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-700">Issue Date</label>
+                  <input
+                    type="text"
+                    value={editingCert.issueDate}
+                    onChange={(e) => setEditingCert({ ...editingCert, issueDate: e.target.value })}
+                    className="mt-1 w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none focus:border-[#920090]"
+                  />
+                </div>
+
                 <div className="flex gap-2 pt-3">
                   <button
                     type="button"
-                    onClick={() => setShowIssueModal(false)}
+                    onClick={() => setEditingCert(null)}
                     className="w-1/2 rounded-xl border border-slate-200 py-2.5 text-xs font-semibold text-slate-600 cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="w-1/2 rounded-xl bg-[#520051] py-2.5 text-xs font-semibold text-white hover:bg-[#920090] cursor-pointer shadow-md"
+                    className="w-1/2 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#520051] py-2.5 text-xs font-bold text-white hover:bg-[#920090] transition shadow-md cursor-pointer"
                   >
-                    Issue Certificate
+                    <Save size={14} /> Save Certificate
                   </button>
                 </div>
               </form>

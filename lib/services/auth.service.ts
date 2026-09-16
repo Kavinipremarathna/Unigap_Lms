@@ -14,9 +14,25 @@ export function isUserAuthenticated(): boolean {
   if (typeof window === "undefined") return false;
   try {
     const isLoggedIn = localStorage.getItem("unigap_auth_logged_in") === "true";
+    const authUser = localStorage.getItem("unigap_auth_user");
+    if (!isLoggedIn || !authUser) return false;
+    const u = JSON.parse(authUser);
+    const roleStr = String(u.role || "").toUpperCase();
+    if (roleStr === "SUPER_ADMIN" || roleStr === "ADMIN" || u.email?.includes("admin@unigap")) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function isAdminAuthenticated(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
     const hasAdminProfile = !!localStorage.getItem("unigap_admin_profile");
-    const hasUserStats = !!localStorage.getItem("unigap_user_stats");
-    return isLoggedIn || hasAdminProfile || hasUserStats;
+    const adminRole = localStorage.getItem("unigap_admin_role");
+    return hasAdminProfile || adminRole === "super_admin" || adminRole === "admin";
   } catch {
     return false;
   }
@@ -192,7 +208,14 @@ export function getAuthenticatedUser(): AuthUser | null {
   if (typeof window === "undefined") return null;
   try {
     const stored = localStorage.getItem("unigap_auth_user");
-    if (stored) return JSON.parse(stored);
+    if (stored) {
+      const u = JSON.parse(stored);
+      const roleStr = String(u.role || "").toUpperCase();
+      if (roleStr === "SUPER_ADMIN" || roleStr === "ADMIN" || u.email?.includes("admin@unigap")) {
+        return null;
+      }
+      return u;
+    }
   } catch {
     // fallback
   }

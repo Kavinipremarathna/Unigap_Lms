@@ -206,6 +206,7 @@ export function SiteContentProvider({ children }: { children: React.ReactNode })
   const [dashboard, setDashboard] = useState<LearnerDashboardContent>(defaultDashboardContent);
 
   useEffect(() => {
+    // 1. Initial load from local cache for instant UI rendering
     try {
       const savedLanding = localStorage.getItem("unigap_landing_content");
       const savedDashboard = localStorage.getItem("unigap_dashboard_content");
@@ -218,6 +219,38 @@ export function SiteContentProvider({ children }: { children: React.ReactNode })
     } catch {
       // ignore
     }
+
+    // 2. Fetch authoritative database content from PostgreSQL
+    async function fetchDbContent() {
+      try {
+        const res = await fetch("/api/site-content");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.landing && typeof data.landing === "object") {
+            setLanding((prev) => {
+              const merged = { ...prev, ...data.landing };
+              try {
+                localStorage.setItem("unigap_landing_content", JSON.stringify(merged));
+              } catch {}
+              return merged;
+            });
+          }
+          if (data.dashboard && typeof data.dashboard === "object") {
+            setDashboard((prev) => {
+              const merged = { ...prev, ...data.dashboard };
+              try {
+                localStorage.setItem("unigap_dashboard_content", JSON.stringify(merged));
+              } catch {}
+              return merged;
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch site content from PostgreSQL:", err);
+      }
+    }
+
+    fetchDbContent();
   }, []);
 
   const updateLanding = (data: Partial<LandingPageContent>) => {
@@ -228,6 +261,14 @@ export function SiteContentProvider({ children }: { children: React.ReactNode })
       } catch {
         // ignore
       }
+
+      // Persist to PostgreSQL database
+      fetch("/api/site-content", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ section: "landing", content: updated }),
+      }).catch((err) => console.error("Error saving landing content to DB:", err));
+
       return updated;
     });
   };
@@ -240,6 +281,14 @@ export function SiteContentProvider({ children }: { children: React.ReactNode })
       } catch {
         // ignore
       }
+
+      // Persist to PostgreSQL database
+      fetch("/api/site-content", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ section: "dashboard", content: updated }),
+      }).catch((err) => console.error("Error saving dashboard content to DB:", err));
+
       return updated;
     });
   };
@@ -251,6 +300,13 @@ export function SiteContentProvider({ children }: { children: React.ReactNode })
     } catch {
       // ignore
     }
+
+    // Save defaults to PostgreSQL database
+    fetch("/api/site-content", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ section: "landing", content: defaultLandingContent }),
+    }).catch((err) => console.error("Error resetting landing content in DB:", err));
   };
 
   return (

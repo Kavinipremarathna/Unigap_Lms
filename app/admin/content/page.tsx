@@ -1116,7 +1116,7 @@ export default function AdminContentManagementPage() {
                       <p className="mt-2 text-xs text-slate-300 max-w-xl">{formData.aiDescription}</p>
                       <div className="mt-5 rounded-2xl border border-slate-700 bg-slate-800 p-4">
                         <p className="text-xs font-bold text-[#920090]">{formData.aiCardTitle}</p>
-                        <p className="mt-1 text-xs italic text-slate-200">"{formData.aiCardQuote}"</p>
+                        <p className="mt-1 text-xs italic text-slate-200">&quot;{formData.aiCardQuote}&quot;</p>
                       </div>
                     </div>
 
