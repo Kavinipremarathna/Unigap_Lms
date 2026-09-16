@@ -118,11 +118,16 @@ export async function POST(request: Request) {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
 
-    // Ensure instructorId exists in PostgreSQL DB
+    // Ensure instructorId exists in PostgreSQL DB (search by ID or Name)
     let validInstructorId: string | null = null;
     if (instructorId) {
-      const existingInst = await prisma.instructor.findUnique({
-        where: { id: instructorId },
+      const existingInst = await prisma.instructor.findFirst({
+        where: {
+          OR: [
+            { id: instructorId },
+            { name: { equals: String(instructorId).trim(), mode: "insensitive" } },
+          ],
+        },
       });
       if (existingInst) {
         validInstructorId = existingInst.id;
