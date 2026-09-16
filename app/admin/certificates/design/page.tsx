@@ -392,7 +392,7 @@ export default function AdminCertificateDesignerPage() {
                       "for successfully completing all curriculum modules, practical assessments, and academic evaluations for the course:"}
                   </p>
                   <p className="text-xs font-bold text-[#2a251e] italic font-serif">
-                    "{previewCourse}"
+                    &quot;{previewCourse}&quot;
                   </p>
                 </div>
               </div>

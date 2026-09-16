@@ -21,10 +21,16 @@ export default function ProfilePage() {
     lessonProgress: {},
   });
   const [enrolledCount, setEnrolledCount] = useState(0);
+  const [editName, setEditName] = useState("");
+  const [isSavingName, setIsSavingName] = useState(false);
+  const [nameSavedSuccess, setNameSavedSuccess] = useState(false);
 
   const loadProfile = () => {
     const u = getAuthenticatedUser();
     setCurrentUser(u);
+    if (u?.name) {
+      setEditName(u.name);
+    }
     const stats = getUserStats();
     setUserStats(stats);
     const enrolled = getEnrolledUserCourses();
@@ -82,10 +88,6 @@ export default function ProfilePage() {
     .join("")
     .substring(0, 2)
     .toUpperCase() || "U";
-
-  const [editName, setEditName] = useState(displayName);
-  const [isSavingName, setIsSavingName] = useState(false);
-  const [nameSavedSuccess, setNameSavedSuccess] = useState(false);
 
   const handleSaveCertificateName = (e: React.FormEvent) => {
     e.preventDefault();

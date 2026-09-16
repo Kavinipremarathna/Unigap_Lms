@@ -292,7 +292,7 @@ export function CertificateModal({ certificate, onClose }: CertificateModalProps
                   "for successfully completing all curriculum modules, practical assessments, and academic evaluations for the course:"}
               </p>
               <p className="text-sm font-bold text-[#2a251e] pt-1 italic font-serif">
-                "{certificate.courseTitle}"
+                &quot;{certificate.courseTitle}&quot;
               </p>
               {certificate.grade && (
                 <p className="text-[11px] font-bold text-amber-900 bg-amber-100/80 inline-block px-3 py-0.5 rounded-full border border-amber-300 mt-1">
