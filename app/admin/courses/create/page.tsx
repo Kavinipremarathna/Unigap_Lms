@@ -206,6 +206,267 @@ export default function CreateCoursePage() {
     );
   };
 
+  const addQuizQuestion = (moduleId: number, lessonId: number) => {
+    setModules((current) =>
+      current.map((mod) => {
+        if (mod.id !== moduleId) return mod;
+        return {
+          ...mod,
+          lessons: mod.lessons.map((les) => {
+            if (les.id !== lessonId) return les;
+            const currentQuestions = les.quizQuestions && les.quizQuestions.length > 0
+              ? [...les.quizQuestions]
+              : [
+                  {
+                    id: 1,
+                    question: les.quizQuestion || "Enter question statement...",
+                    options: les.quizOptions || ["Option A", "Option B", "Option C", "Option D"],
+                    correctIndex: les.quizCorrectIndex ?? 0,
+                    points: 10,
+                  },
+                ];
+            const newQ = {
+              id: Date.now(),
+              question: "Enter question statement...",
+              options: ["Option A", "Option B", "Option C", "Option D"],
+              correctIndex: 0,
+              points: 10,
+            };
+            const updatedQs = [...currentQuestions, newQ];
+            return {
+              ...les,
+              quizQuestions: updatedQs,
+              quizQuestion: updatedQs[0].question,
+              quizOptions: updatedQs[0].options,
+              quizCorrectIndex: updatedQs[0].correctIndex,
+            };
+          }),
+        };
+      })
+    );
+  };
+
+  const deleteQuizQuestion = (moduleId: number, lessonId: number, qIdx: number) => {
+    setModules((current) =>
+      current.map((mod) => {
+        if (mod.id !== moduleId) return mod;
+        return {
+          ...mod,
+          lessons: mod.lessons.map((les) => {
+            if (les.id !== lessonId) return les;
+            const currentQuestions = les.quizQuestions || [];
+            const updatedQs = currentQuestions.filter((_, idx) => idx !== qIdx);
+            return {
+              ...les,
+              quizQuestions: updatedQs,
+              quizQuestion: updatedQs[0]?.question || "",
+              quizOptions: updatedQs[0]?.options || ["Option A", "Option B", "Option C", "Option D"],
+              quizCorrectIndex: updatedQs[0]?.correctIndex ?? 0,
+            };
+          }),
+        };
+      })
+    );
+  };
+
+  const updateQuizQuestionField = (
+    moduleId: number,
+    lessonId: number,
+    qIdx: number,
+    field: string,
+    val: any
+  ) => {
+    setModules((current) =>
+      current.map((mod) => {
+        if (mod.id !== moduleId) return mod;
+        return {
+          ...mod,
+          lessons: mod.lessons.map((les) => {
+            if (les.id !== lessonId) return les;
+            const currentQuestions = les.quizQuestions && les.quizQuestions.length > 0
+              ? [...les.quizQuestions]
+              : [
+                  {
+                    id: 1,
+                    question: les.quizQuestion || "",
+                    options: les.quizOptions || ["Option A", "Option B", "Option C", "Option D"],
+                    correctIndex: les.quizCorrectIndex ?? 0,
+                    points: 10,
+                  },
+                ];
+            if (!currentQuestions[qIdx]) return les;
+            currentQuestions[qIdx] = { ...currentQuestions[qIdx], [field]: val };
+            return {
+              ...les,
+              quizQuestions: currentQuestions,
+              quizQuestion: field === "question" && qIdx === 0 ? val : les.quizQuestion,
+            };
+          }),
+        };
+      })
+    );
+  };
+
+  const addQuizOption = (moduleId: number, lessonId: number, qIdx: number) => {
+    setModules((current) =>
+      current.map((mod) => {
+        if (mod.id !== moduleId) return mod;
+        return {
+          ...mod,
+          lessons: mod.lessons.map((les) => {
+            if (les.id !== lessonId) return les;
+            const currentQuestions = les.quizQuestions && les.quizQuestions.length > 0
+              ? [...les.quizQuestions]
+              : [
+                  {
+                    id: 1,
+                    question: les.quizQuestion || "",
+                    options: les.quizOptions || ["Option A", "Option B", "Option C", "Option D"],
+                    correctIndex: les.quizCorrectIndex ?? 0,
+                    points: 10,
+                  },
+                ];
+            const q = currentQuestions[qIdx];
+            if (!q) return les;
+            const letter = String.fromCharCode(65 + q.options.length);
+            const updatedOpts = [...q.options, `Option ${letter}`];
+            currentQuestions[qIdx] = { ...q, options: updatedOpts };
+            return {
+              ...les,
+              quizQuestions: currentQuestions,
+              quizOptions: qIdx === 0 ? updatedOpts : les.quizOptions,
+            };
+          }),
+        };
+      })
+    );
+  };
+
+  const updateQuizOptionText = (
+    moduleId: number,
+    lessonId: number,
+    qIdx: number,
+    optIdx: number,
+    val: string
+  ) => {
+    setModules((current) =>
+      current.map((mod) => {
+        if (mod.id !== moduleId) return mod;
+        return {
+          ...mod,
+          lessons: mod.lessons.map((les) => {
+            if (les.id !== lessonId) return les;
+            const currentQuestions = les.quizQuestions && les.quizQuestions.length > 0
+              ? [...les.quizQuestions]
+              : [
+                  {
+                    id: 1,
+                    question: les.quizQuestion || "",
+                    options: les.quizOptions || ["Option A", "Option B", "Option C", "Option D"],
+                    correctIndex: les.quizCorrectIndex ?? 0,
+                    points: 10,
+                  },
+                ];
+            const q = currentQuestions[qIdx];
+            if (!q || !q.options) return les;
+            const updatedOpts = [...q.options];
+            updatedOpts[optIdx] = val;
+            currentQuestions[qIdx] = { ...q, options: updatedOpts };
+            return {
+              ...les,
+              quizQuestions: currentQuestions,
+              quizOptions: qIdx === 0 ? updatedOpts : les.quizOptions,
+            };
+          }),
+        };
+      })
+    );
+  };
+
+  const setQuizCorrectAnswer = (
+    moduleId: number,
+    lessonId: number,
+    qIdx: number,
+    optIdx: number
+  ) => {
+    setModules((current) =>
+      current.map((mod) => {
+        if (mod.id !== moduleId) return mod;
+        return {
+          ...mod,
+          lessons: mod.lessons.map((les) => {
+            if (les.id !== lessonId) return les;
+            const currentQuestions = les.quizQuestions && les.quizQuestions.length > 0
+              ? [...les.quizQuestions]
+              : [
+                  {
+                    id: 1,
+                    question: les.quizQuestion || "",
+                    options: les.quizOptions || ["Option A", "Option B", "Option C", "Option D"],
+                    correctIndex: les.quizCorrectIndex ?? 0,
+                    points: 10,
+                  },
+                ];
+            const q = currentQuestions[qIdx];
+            if (!q) return les;
+            currentQuestions[qIdx] = { ...q, correctIndex: optIdx };
+            return {
+              ...les,
+              quizQuestions: currentQuestions,
+              quizCorrectIndex: qIdx === 0 ? optIdx : les.quizCorrectIndex,
+            };
+          }),
+        };
+      })
+    );
+  };
+
+  const deleteQuizOption = (
+    moduleId: number,
+    lessonId: number,
+    qIdx: number,
+    optIdx: number
+  ) => {
+    setModules((current) =>
+      current.map((mod) => {
+        if (mod.id !== moduleId) return mod;
+        return {
+          ...mod,
+          lessons: mod.lessons.map((les) => {
+            if (les.id !== lessonId) return les;
+            const currentQuestions = les.quizQuestions && les.quizQuestions.length > 0
+              ? [...les.quizQuestions]
+              : [
+                  {
+                    id: 1,
+                    question: les.quizQuestion || "",
+                    options: les.quizOptions || ["Option A", "Option B", "Option C", "Option D"],
+                    correctIndex: les.quizCorrectIndex ?? 0,
+                    points: 10,
+                  },
+                ];
+            const q = currentQuestions[qIdx];
+            if (!q || q.options.length <= 2) return les;
+            const updatedOpts = q.options.filter((_: string, idx: number) => idx !== optIdx);
+            let updatedCorrect = q.correctIndex;
+            if (optIdx === q.correctIndex) {
+              updatedCorrect = 0;
+            } else if (optIdx < q.correctIndex) {
+              updatedCorrect = Math.max(0, q.correctIndex - 1);
+            }
+            currentQuestions[qIdx] = { ...q, options: updatedOpts, correctIndex: updatedCorrect };
+            return {
+              ...les,
+              quizQuestions: currentQuestions,
+              quizOptions: qIdx === 0 ? updatedOpts : les.quizOptions,
+              quizCorrectIndex: qIdx === 0 ? updatedCorrect : les.quizCorrectIndex,
+            };
+          }),
+        };
+      })
+    );
+  };
+
   const toggleModule = (id: number) => {
     setExpandedModules((current) =>
       current.includes(id)
@@ -888,15 +1149,177 @@ export default function CreateCoursePage() {
                                 </div>
 
                                 {lesson.type === "Quiz" && (
-                                  <div className="pt-2 border-t border-slate-200/60 space-y-2">
-                                    <span className="font-bold text-[#520051] block">❓ Quiz Question & Answer Config</span>
-                                    <input
-                                      type="text"
-                                      value={lesson.quizQuestion || ""}
-                                      onChange={(e) => updateLesson(module.id, lesson.id, "quizQuestion", e.target.value)}
-                                      placeholder="Enter Quiz Question statement..."
-                                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold outline-none focus:border-[#920090]"
-                                    />
+                                  <div className="pt-2 border-t border-slate-200/60 space-y-3">
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                      <div className="flex items-center gap-2">
+                                        <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#520051] text-white text-xs font-bold">❓</span>
+                                        <span className="font-bold text-[#520051] text-xs">
+                                          Quiz Assessment Configuration
+                                        </span>
+                                        <span className="rounded-full bg-[#f7ddf7] px-2.5 py-0.5 text-[10px] font-bold text-[#920090]">
+                                          {(lesson.quizQuestions?.length || 1)} Question{(lesson.quizQuestions?.length || 1) > 1 ? "s" : ""}
+                                        </span>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => addQuizQuestion(module.id, lesson.id)}
+                                        className="inline-flex items-center gap-1 rounded-lg bg-[#520051] px-2.5 py-1 text-[11px] font-bold text-white hover:bg-[#920090] transition shadow-2xs cursor-pointer"
+                                      >
+                                        <Plus size={12} /> Add Question
+                                      </button>
+                                    </div>
+
+                                    {/* Questions List */}
+                                    <div className="space-y-3">
+                                      {((lesson.quizQuestions && lesson.quizQuestions.length > 0)
+                                        ? lesson.quizQuestions
+                                        : [
+                                            {
+                                              id: 1,
+                                              question: lesson.quizQuestion || "",
+                                              options: lesson.quizOptions || ["Option A", "Option B", "Option C", "Option D"],
+                                              correctIndex: lesson.quizCorrectIndex ?? 0,
+                                              points: 10,
+                                            },
+                                          ]
+                                      ).map((q, qIdx) => (
+                                        <div key={q.id || qIdx} className="rounded-xl border-2 border-purple-200/80 bg-white p-3.5 space-y-3 shadow-2xs">
+                                          <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                                            <div className="flex items-center gap-2">
+                                              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[#f7ddf7] text-xs font-extrabold text-[#920090]">
+                                                Q{qIdx + 1}
+                                              </span>
+                                              <span className="font-bold text-xs text-[#520051]">Question Statement & Correct Answer</span>
+                                            </div>
+
+                                            <div className="flex items-center gap-2">
+                                              <div className="flex items-center gap-1">
+                                                <span className="text-[11px] font-semibold text-slate-500">Marks:</span>
+                                                <input
+                                                  type="number"
+                                                  min="1"
+                                                  max="100"
+                                                  value={q.points || 10}
+                                                  onChange={(e) => updateQuizQuestionField(module.id, lesson.id, qIdx, "points", Number(e.target.value) || 10)}
+                                                  className="w-14 rounded-md border border-slate-200 px-2 py-0.5 text-xs font-bold text-[#520051] text-center outline-none focus:border-[#920090]"
+                                                />
+                                              </div>
+
+                                              {(lesson.quizQuestions?.length || 0) > 1 && (
+                                                <button
+                                                  type="button"
+                                                  onClick={() => deleteQuizQuestion(module.id, lesson.id, qIdx)}
+                                                  className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500 transition cursor-pointer"
+                                                  title="Delete this question"
+                                                >
+                                                  <Trash2 size={14} />
+                                                </button>
+                                              )}
+                                            </div>
+                                          </div>
+
+                                          <div>
+                                            <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                                              Question Title / Statement:
+                                            </label>
+                                            <input
+                                              type="text"
+                                              value={q.question || ""}
+                                              onChange={(e) => updateQuizQuestionField(module.id, lesson.id, qIdx, "question", e.target.value)}
+                                              placeholder={`Enter question ${qIdx + 1} statement (e.g. What is the minimum compressive strength for foundation concrete?)...`}
+                                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium outline-none focus:border-[#920090]"
+                                            />
+                                          </div>
+
+                                          {/* Options List */}
+                                          <div className="space-y-1.5 pt-1">
+                                            <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500">
+                                              <span>Answer Choices (Select radio to set the CORRECT answer for marks):</span>
+                                              <button
+                                                type="button"
+                                                onClick={() => addQuizOption(module.id, lesson.id, qIdx)}
+                                                className="text-[#920090] hover:underline font-bold text-[10px]"
+                                              >
+                                                + Add Option
+                                              </button>
+                                            </div>
+
+                                            <div className="space-y-1.5">
+                                              {q.options.map((opt: string, optIdx: number) => {
+                                                const isCorrect = q.correctIndex === optIdx;
+                                                const letter = String.fromCharCode(65 + optIdx);
+                                                return (
+                                                  <div
+                                                    key={optIdx}
+                                                    onClick={() => setQuizCorrectAnswer(module.id, lesson.id, qIdx, optIdx)}
+                                                    className={`flex items-center gap-2 rounded-lg border p-2 text-xs transition cursor-pointer ${
+                                                      isCorrect
+                                                        ? "border-emerald-500 bg-emerald-50/80 shadow-2xs"
+                                                        : "border-slate-200 bg-[#faf5fa]/40 hover:bg-slate-50"
+                                                    }`}
+                                                  >
+                                                    {/* Radio Button */}
+                                                    <input
+                                                      type="radio"
+                                                      name={`correct-create-${lesson.id}-${qIdx}`}
+                                                      checked={isCorrect}
+                                                      onChange={() => setQuizCorrectAnswer(module.id, lesson.id, qIdx, optIdx)}
+                                                      className="h-4 w-4 accent-emerald-600 cursor-pointer"
+                                                    />
+
+                                                    <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded text-[10px] font-bold ${
+                                                      isCorrect ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-700"
+                                                    }`}>
+                                                      {letter}
+                                                    </span>
+
+                                                    <input
+                                                      type="text"
+                                                      value={opt}
+                                                      onClick={(e) => e.stopPropagation()}
+                                                      onChange={(e) => updateQuizOptionText(module.id, lesson.id, qIdx, optIdx, e.target.value)}
+                                                      placeholder={`Option ${letter} text...`}
+                                                      className="flex-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs outline-none focus:border-[#920090]"
+                                                    />
+
+                                                    {isCorrect ? (
+                                                      <span className="shrink-0 rounded-md bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                                                        ✓ Correct Answer (Marks Awarded)
+                                                      </span>
+                                                    ) : (
+                                                      <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          setQuizCorrectAnswer(module.id, lesson.id, qIdx, optIdx);
+                                                        }}
+                                                        className="shrink-0 text-[10px] font-semibold text-slate-400 hover:text-emerald-700"
+                                                      >
+                                                        Set Correct
+                                                      </button>
+                                                    )}
+
+                                                    {q.options.length > 2 && (
+                                                      <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          deleteQuizOption(module.id, lesson.id, qIdx, optIdx);
+                                                        }}
+                                                        className="shrink-0 text-slate-400 hover:text-red-500 p-1"
+                                                        title="Delete option"
+                                                      >
+                                                        <Trash2 size={13} />
+                                                      </button>
+                                                    )}
+                                                  </div>
+                                                );
+                                              })}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
                                   </div>
                                 )}
                               </div>
