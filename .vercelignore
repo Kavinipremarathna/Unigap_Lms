@@ -1,0 +1,3 @@
+# Exclude backend directory from Vercel Next.js frontend build
+backend/
+prisma/seed.ts
