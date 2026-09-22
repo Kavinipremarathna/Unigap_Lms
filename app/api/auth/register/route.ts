@@ -48,6 +48,15 @@ export async function POST(request: Request) {
         email,
         passwordHash,
         role: "STUDENT",
+        stats: {
+          create: {
+            streak: 0,
+            xp: 0,
+            level: 1,
+            minutesDone: 0,
+            completedLessons: 0,
+          },
+        },
       },
     });
 

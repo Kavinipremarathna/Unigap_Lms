@@ -47,8 +47,11 @@ export async function loginWithNestJS(email: string, pass: string): Promise<{ to
       body: JSON.stringify({ email: email.trim(), password: pass }),
       credentials: "include",
     });
+    if (!response.ok) {
+      throw new Error(`NestJS login endpoint status: ${response.status}`);
+    }
   } catch {
-    // Fallback to Next.js internal API route if NestJS server is not reachable
+    // Fallback to Next.js internal API route if NestJS server is not reachable or returns error
     response = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -92,8 +95,11 @@ export async function registerWithNestJS(name: string, email: string, pass: stri
       body: JSON.stringify({ name: name.trim(), email: email.trim(), password: pass }),
       credentials: "include",
     });
+    if (!response.ok) {
+      throw new Error(`NestJS register endpoint status: ${response.status}`);
+    }
   } catch {
-    // Fallback to Next.js internal API route if NestJS server is not reachable
+    // Fallback to Next.js internal API route if NestJS server is not reachable or returns error
     response = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
