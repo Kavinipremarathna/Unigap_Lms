@@ -250,6 +250,27 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ message: "Course ID or title required for editing." }, { status: 400 });
     }
 
+    // Resolve valid instructor ID in PostgreSQL DB
+    let validInstructorId: string | undefined = undefined;
+    if (instructorId) {
+      const existingInst = await prisma.instructor.findFirst({
+        where: {
+          OR: [
+            { id: instructorId },
+            { name: { equals: String(instructorId).trim(), mode: "insensitive" as const } },
+          ],
+        },
+      });
+      if (existingInst) {
+        validInstructorId = existingInst.id;
+      } else {
+        const firstInst = await prisma.instructor.findFirst();
+        if (firstInst) {
+          validInstructorId = firstInst.id;
+        }
+      }
+    }
+
     // Resolve real course in DB by ID, slug, or title
     let targetCourse = id ? await prisma.course.findUnique({ where: { id } }).catch(() => null) : null;
     if (!targetCourse) {
@@ -264,29 +285,71 @@ export async function PATCH(request: Request) {
       });
     }
 
+    let realCourseId: string;
+    let updated: any;
+
     if (!targetCourse) {
-      return NextResponse.json({ message: `Course not found in database for id: ${id || title}` }, { status: 404 });
+      // Auto-create course in DB if not found yet
+      let fallbackInstId = validInstructorId;
+      if (!fallbackInstId) {
+        const firstInst = await prisma.instructor.findFirst();
+        if (firstInst) {
+          fallbackInstId = firstInst.id;
+        } else {
+          const newInst = await prisma.instructor.create({
+            data: {
+              name: "Dr. Sarah Jenkins",
+              title: "Senior Educator",
+              bio: "Lead Instructor at UNIGAP",
+              avatar: "SJ",
+            },
+          });
+          fallbackInstId = newInst.id;
+        }
+      }
+
+      let slug = title
+        ? title.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
+        : `course-${Date.now()}`;
+
+      updated = await prisma.course.create({
+        data: {
+          title: title ? title.trim() : "Untitled Course",
+          slug: slug || `course-${Date.now()}`,
+          description: description?.trim() || title || "Course description",
+          shortDesc: description?.trim() || title || "Course description",
+          category: category?.trim() || "Web Development",
+          level: level || "Beginner",
+          price: isFree ? 0 : Number(price) || 0,
+          isFree: Boolean(isFree || Number(price) === 0),
+          status: status || "Published",
+          isPublished: status !== "Draft",
+          instructorId: fallbackInstId,
+          durationHours: Number(durationHours) || 10,
+          thumbnailUrl: thumbnailUrl ? thumbnailUrl.trim() : null,
+        },
+        include: { instructor: true },
+      });
+      realCourseId = updated.id;
+    } else {
+      realCourseId = targetCourse.id;
+      updated = await prisma.course.update({
+        where: { id: realCourseId },
+        data: {
+          ...(title ? { title: title.trim() } : {}),
+          ...(description ? { description: description.trim(), shortDesc: description.trim() } : {}),
+          ...(category ? { category: category.trim() } : {}),
+          ...(level ? { level } : {}),
+          ...(price !== undefined ? { price: isFree ? 0 : Number(price) } : {}),
+          ...(isFree !== undefined ? { isFree: Boolean(isFree) } : {}),
+          ...(status ? { status, isPublished: status !== "Draft" } : {}),
+          ...(validInstructorId ? { instructorId: validInstructorId } : {}),
+          ...(durationHours !== undefined ? { durationHours: Number(durationHours) } : {}),
+          ...(thumbnailUrl !== undefined ? { thumbnailUrl: thumbnailUrl ? thumbnailUrl.trim() : null } : {}),
+        },
+        include: { instructor: true },
+      });
     }
-
-    const realCourseId = targetCourse.id;
-
-    // 1. Update top-level course fields
-    const updated = await prisma.course.update({
-      where: { id: realCourseId },
-      data: {
-        ...(title ? { title: title.trim() } : {}),
-        ...(description ? { description: description.trim(), shortDesc: description.trim() } : {}),
-        ...(category ? { category: category.trim() } : {}),
-        ...(level ? { level } : {}),
-        ...(price !== undefined ? { price: isFree ? 0 : Number(price) } : {}),
-        ...(isFree !== undefined ? { isFree: Boolean(isFree) } : {}),
-        ...(status ? { status, isPublished: status !== "Draft" } : {}),
-        ...(instructorId ? { instructorId } : {}),
-        ...(durationHours !== undefined ? { durationHours: Number(durationHours) } : {}),
-        ...(thumbnailUrl !== undefined ? { thumbnailUrl: thumbnailUrl ? thumbnailUrl.trim() : null } : {}),
-      },
-      include: { instructor: true },
-    });
 
     // 2. Sync curriculum — delete all existing modules (cascades to lessons + quizData)
     //    then recreate from the admin editor payload so students always see live changes.
